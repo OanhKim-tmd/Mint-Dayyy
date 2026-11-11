@@ -4,8 +4,7 @@
  * Features:
  *  - 100% reliable LocalStorage data persistence (no loss on refresh/restart)
  *  - Independent multi-task countdown timer (switch & pause without losing time)
- *  - 25 motivational songs (Á · Âu · Mỹ) with volume control
- *  - Zero sound effects (clean, quiet, tranquil)
+ *  - Pure, minimal audio: start chime & countdown completion chime only
  */
 (() => {
   "use strict";
@@ -211,168 +210,106 @@
   }
 
   // ==========================================================
-  // PLAYLIST 25 BÀI NHẠC ĐỘNG LỰC (Á · ÂU · MỸ)
+  // WEB AUDIO SYNTHESIZER: START & COUNTDOWN FINISH CHIMES ONLY
   // ==========================================================
-  const MOTIVATIONAL_PLAYLIST = [
-    // --- 🌸 Á (Châu Á · Piano, Lofi & Ghibli) ---
-    { id: 1, title: "River Flows in You", artist: "Yiruma", region: "Á", tag: "Hàn Quốc · Piano Focus", duration: "3:08", src: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=piano-moment-9835.mp3" },
-    { id: 2, title: "Kiss the Rain", artist: "Yiruma", region: "Á", tag: "Hàn Quốc · Êm dịu ngày mưa", duration: "4:16", src: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=rain-and-nostalgia-chill-lofi-18567.mp3" },
-    { id: 3, title: "Summer (Kikujiro Theme)", artist: "Joe Hisaishi", region: "Á", tag: "Nhật Bản · Tràn đầy năng lượng", duration: "3:30", src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=spring-flowers-10908.mp3" },
-    { id: 4, title: "Always With Me (Spirited Away)", artist: "Joe Hisaishi", region: "Á", tag: "Nhật Bản · Ghibli Study", duration: "3:35", src: "https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f77c30.mp3?filename=sweet-love-121561.mp3" },
-    { id: 5, title: "Windy Hill", artist: "羽肿 (Yu Zhong)", region: "Á", tag: "Trung Quốc · Đồng cỏ xanh thư thái", duration: "4:20", src: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3?filename=peaceful-garden-healing-light-piano-116035.mp3" },
-    { id: 6, title: "Merry-Go-Round of Life", artist: "Joe Hisaishi", region: "Á", tag: "Nhật Bản · Howl's Castle", duration: "3:15", src: "https://cdn.pixabay.com/download/audio/2021/08/08/audio_c6ccf3232f.mp3?filename=waltz-in-the-clouds-1725.mp3" },
-    { id: 7, title: "Through the Night (Lo-fi Acoustic)", artist: "IU (Tribute)", region: "Á", tag: "Hàn Quốc · Êm dịu đêm muộn", duration: "3:40", src: "https://cdn.pixabay.com/download/audio/2022/11/06/audio_c93976378e.mp3?filename=cozy-night-lofi-124976.mp3" },
-    { id: 8, title: "First Love (Piano Instrumental)", artist: "Utada Hikaru", region: "Á", tag: "Nhật Bản · Sâu lắng hoài niệm", duration: "4:10", src: "https://cdn.pixabay.com/download/audio/2022/02/07/audio_d07672223a.mp3?filename=relaxing-mountains-rivers-19409.mp3" },
-    { id: 9, title: "Sứ Thanh Hoa (Thanh Hoa Sứ)", artist: "Jay Chou", region: "Á", tag: "Á Đông · Tiếng sáo trúc & đàn tranh", duration: "3:58", src: "https://cdn.pixabay.com/download/audio/2023/02/28/audio_550d359677.mp3?filename=bamboo-flute-zen-141381.mp3" },
-    { id: 10, title: "Góc Bàn Học Chiều Mưa", artist: "Kim Oanh Lo-fi Mix", region: "Á", tag: "Việt Nam · Acoustic ấm áp", duration: "3:22", src: "https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3?filename=lofi-study-112191.mp3" },
-
-    // --- 🍃 Âu (Châu Âu · Cổ Điển & Cảm Hứng Cao Trào) ---
-    { id: 11, title: "Nuvole Bianche", artist: "Ludovico Einaudi", region: "Âu", tag: "Ý · Khơi nguồn cảm hứng sâu", duration: "5:57", src: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c230e78c85.mp3?filename=hopeful-piano-10779.mp3" },
-    { id: 12, title: "Experience", artist: "Ludovico Einaudi", region: "Âu", tag: "Ý · Động lực & Tinh thần thép", duration: "5:15", src: "https://cdn.pixabay.com/download/audio/2021/09/06/audio_24344e5bd3.mp3?filename=epic-cinematic-trailer-1940.mp3" },
-    { id: 13, title: "Clair de Lune", artist: "Claude Debussy", region: "Âu", tag: "Pháp · Ánh trăng tĩnh lặng", duration: "4:50", src: "https://cdn.pixabay.com/download/audio/2022/01/26/audio_b2f90a98c8.mp3?filename=clair-de-lune-debussy-piano-18968.mp3" },
-    { id: 14, title: "Gymnopédie No.1", artist: "Erik Satie", region: "Âu", tag: "Pháp · Tĩnh lặng không xao nhãng", duration: "3:30", src: "https://cdn.pixabay.com/download/audio/2022/03/24/audio_34e156ca01.mp3?filename=gymnopedie-no-1-11116.mp3" },
-    { id: 15, title: "Canon in D (Warm Piano)", artist: "Johann Pachelbel", region: "Âu", tag: "Đức · Giai điệu hy vọng", duration: "4:05", src: "https://cdn.pixabay.com/download/audio/2022/01/21/audio_13c1c7ea0d.mp3?filename=canon-in-d-major-piano-18803.mp3" },
-    { id: 16, title: "Spring (Four Seasons)", artist: "Antonio Vivaldi", region: "Âu", tag: "Ý · Tươi sáng & Đón chào ngày mới", duration: "3:45", src: "https://cdn.pixabay.com/download/audio/2021/11/01/audio_00a12e32a6.mp3?filename=classical-spring-violin-6842.mp3" },
-    { id: 17, title: "Amélie Poulain Theme", artist: "Yann Tiersen", region: "Âu", tag: "Pháp · Dễ thương & Nhẹ nhàng", duration: "2:40", src: "https://cdn.pixabay.com/download/audio/2022/04/27/audio_c40f58ec71.mp3?filename=french-accordion-cafe-110825.mp3" },
-    { id: 18, title: "Weightless Harmony", artist: "Marconi Union Style", region: "Âu", tag: "Anh · Giảm căng thẳng tối đa", duration: "6:10", src: "https://cdn.pixabay.com/download/audio/2022/05/05/audio_1204218f4a.mp3?filename=deep-ambient-relaxation-111867.mp3" },
-
-    // --- ✨ Mỹ (Bắc Mỹ · Lofi Beats, Chillhop & Acoustic) ---
-    { id: 19, title: "Lofi Girl Study Session", artist: "ChilledCow Beats", region: "Mỹ", tag: "Mỹ · Tiết tấu học bài kinh điển", duration: "2:45", src: "https://cdn.pixabay.com/download/audio/2022/05/16/audio_c89c74415b.mp3?filename=lofi-chill-medium-version-112189.mp3" },
-    { id: 20, title: "Golden Hour (Acoustic Strings)", artist: "JVKE (Cover)", region: "Mỹ", tag: "Mỹ · Năng lượng tích cực", duration: "3:30", src: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_24a2ef6ae3.mp3?filename=warm-golden-sunset-acoustic-123865.mp3" },
-    { id: 21, title: "Interstellar Theme (Focus Piano)", artist: "Hans Zimmer Style", region: "Mỹ", tag: "Mỹ · Tinh thần bứt phá", duration: "4:40", src: "https://cdn.pixabay.com/download/audio/2022/08/04/audio_32c9cebb8c.mp3?filename=space-piano-ambient-116246.mp3" },
-    { id: 22, title: "Coffee Shop Mornings", artist: "Chillhop Cafe", region: "Mỹ", tag: "Mỹ · Ấm áp tách Cappuccino", duration: "3:10", src: "https://cdn.pixabay.com/download/audio/2022/11/14/audio_d04c27a9be.mp3?filename=coffee-chill-lofi-125678.mp3" },
-    { id: 23, title: "Sunset Drive Lo-fi", artist: "Downtown Chill", region: "Mỹ", tag: "Mỹ · Dòng chảy tập trung mượt mà", duration: "3:05", src: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_51c6c9a751.mp3?filename=sunset-landscape-lofi-10777.mp3" },
-    { id: 24, title: "Midnight Coding & Study", artist: "Sleepy Fish Style", region: "Mỹ", tag: "Mỹ · Tập trung cao độ ban đêm", duration: "3:25", src: "https://cdn.pixabay.com/download/audio/2022/04/18/audio_658097b6cf.mp3?filename=chill-lofi-song-8444.mp3" },
-    { id: 25, title: "Better Days Ahead", artist: "Lofi Records", region: "Mỹ", tag: "Mỹ · Niềm tin & Cố gắng mỗi ngày", duration: "2:50", src: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_7565d7756f.mp3?filename=lofi-study-beat-18568.mp3" }
-  ];
-
-  let currentTrackIndex = 0;
-  let isMusicPlaying = false;
-  let musicVolume = 0.65;
-  let playlistRegionFilter = "all";
-  let playlistSearchQuery = "";
-  const audioEl = $("musicAudio");
-
-  function currentTrack() {
-    return MOTIVATIONAL_PLAYLIST[currentTrackIndex] || MOTIVATIONAL_PLAYLIST[0];
-  }
-
-  function playTrack(index) {
-    if (index >= 0 && index < MOTIVATIONAL_PLAYLIST.length) {
-      currentTrackIndex = index;
-    }
-    const track = currentTrack();
-    audioEl.src = track.src;
-    audioEl.volume = musicVolume;
-
-    audioEl.play()
-      .then(() => {
-        isMusicPlaying = true;
-        updateMusicUI();
-      })
-      .catch(() => {
-        isMusicPlaying = true;
-        updateMusicUI();
-      });
-  }
-
-  function togglePlayMusic() {
-    if (isMusicPlaying) {
-      audioEl.pause();
-      isMusicPlaying = false;
-    } else {
-      if (!audioEl.src) {
-        playTrack(currentTrackIndex);
-      } else {
-        audioEl.play().catch(() => {});
-        isMusicPlaying = true;
+  let audioCtx = null;
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
       }
     }
-    updateMusicUI();
-  }
-
-  function nextTrack() {
-    currentTrackIndex = (currentTrackIndex + 1) % MOTIVATIONAL_PLAYLIST.length;
-    playTrack(currentTrackIndex);
-  }
-
-  function prevTrack() {
-    currentTrackIndex = (currentTrackIndex - 1 + MOTIVATIONAL_PLAYLIST.length) % MOTIVATIONAL_PLAYLIST.length;
-    playTrack(currentTrackIndex);
-  }
-
-  audioEl.addEventListener("ended", () => {
-    nextTrack();
-  });
-
-  function updateMusicUI() {
-    const track = currentTrack();
-
-    // Column 2 Music bar
-    $("tmbTitle").textContent = `${track.title} · ${track.artist}`;
-    $("tmbPlayBtn").textContent = isMusicPlaying ? "⏸" : "▶";
-    $("tmbDot").classList.toggle("playing", isMusicPlaying);
-
-    // Bottom Dock
-    $("dockTrackTitle").textContent = track.title;
-    $("dockTrackArtist").textContent = `${track.artist} · ${track.region} · ${track.tag}`;
-    $("dockPlayIcon").textContent = isMusicPlaying ? "⏸" : "▶";
-    $("dockPlayBtn").classList.toggle("playing", isMusicPlaying);
-
-    // Playlist Modal Banner
-    $("mpbTitle").textContent = track.title;
-    $("mpbArtist").textContent = `${track.artist} · ${track.tag}`;
-    $("mpbTag").textContent = track.region === "Á" ? "🌸 CHÂU Á" : (track.region === "Âu" ? "🍃 CHÂU ÂU" : "✨ BẮC MỸ");
-    $("mpbPlayBtn").textContent = isMusicPlaying ? "⏸" : "▶";
-
-    // Highlight row in playlist
-    document.querySelectorAll(".track-row").forEach((row, i) => {
-      row.classList.toggle("is-current", i === currentTrackIndex);
-    });
-  }
-
-  function handleMusicVolumeChange(val) {
-    const num = Math.max(0, Math.min(100, Number(val))) / 100;
-    musicVolume = num;
-    audioEl.volume = num;
-    const pct = Math.round(num * 100) + "%";
-    $("musicVolumeSlider").value = Math.round(num * 100);
-    $("musicVolVal").textContent = pct;
-    $("modalVolSlider").value = Math.round(num * 100);
-    $("modalVolText").textContent = pct;
-  }
-
-  function renderPlaylist() {
-    const scroll = $("playlistScroll");
-    if (!scroll) return;
-
-    const filtered = MOTIVATIONAL_PLAYLIST.filter(t => {
-      const matchRegion = playlistRegionFilter === "all" || t.region === playlistRegionFilter;
-      const query = playlistSearchQuery.toLowerCase().trim();
-      const matchSearch = !query || t.title.toLowerCase().includes(query) || t.artist.toLowerCase().includes(query) || t.tag.toLowerCase().includes(query);
-      return matchRegion && matchSearch;
-    });
-
-    if (filtered.length === 0) {
-      scroll.innerHTML = `<div class="history-empty-text">Không tìm thấy bài hát phù hợp.</div>`;
-      return;
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
     }
+    return audioCtx;
+  }
 
-    scroll.innerHTML = filtered.map(t => {
-      const idx = MOTIVATIONAL_PLAYLIST.findIndex(x => x.id === t.id);
-      const isCur = idx === currentTrackIndex;
-      return `
-        <div class="track-row ${isCur ? "is-current" : ""}" data-index="${idx}">
-          <span class="track-num">${isCur && isMusicPlaying ? "▶" : String(idx + 1).padStart(2, "0")}</span>
-          <div class="track-text-group">
-            <h4>${escapeHtml(t.title)}</h4>
-            <span>${escapeHtml(t.artist)} · ${escapeHtml(t.tag)}</span>
-          </div>
-          <span class="track-badge">${t.region === "Á" ? "🌸 Á" : (t.region === "Âu" ? "🍃 Âu" : "✨ Mỹ")}</span>
-          <span class="track-duration">${t.duration}</span>
-        </div>
-      `;
-    }).join("");
+  // Âm thanh khi ấn bắt đầu (Start Chime: 2 nốt ấm áp vươn lên D5 -> A5)
+  function playStartSound() {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const vol = 0.20;
+
+      const notes = [
+        { f: 587.33, t: 0.00, dur: 0.8 }, // D5
+        { f: 880.00, t: 0.12, dur: 1.0 }  // A5
+      ];
+
+      notes.forEach(n => {
+        const osc = ctx.createOscillator();
+        const harmonic = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(n.f, now + n.t);
+
+        harmonic.type = "triangle";
+        harmonic.frequency.setValueAtTime(n.f * 2, now + n.t);
+
+        gain.gain.setValueAtTime(0.0001, now + n.t);
+        gain.gain.linearRampToValueAtTime(vol, now + n.t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + n.t + n.dur);
+
+        osc.connect(gain);
+        harmonic.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + n.t);
+        harmonic.start(now + n.t);
+        osc.stop(now + n.t + n.dur + 0.05);
+        harmonic.stop(now + n.t + n.dur + 0.05);
+      });
+    } catch {
+      // Audio autoplay policy fallback
+    }
+  }
+
+  // Âm thanh khi kết thúc đếm ngược chạy (Finish Chime: 4 nốt chuông ngân C5 -> E5 -> G5 -> C6)
+  function playFinishSound() {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const vol = 0.22;
+
+      const chord = [
+        { f: 523.25, t: 0.00, dur: 1.3 }, // C5
+        { f: 659.25, t: 0.13, dur: 1.4 }, // E5
+        { f: 783.99, t: 0.26, dur: 1.6 }, // G5
+        { f: 1046.50, t: 0.39, dur: 2.2 } // C6
+      ];
+
+      chord.forEach(n => {
+        const osc = ctx.createOscillator();
+        const harmonic = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(n.f, now + n.t);
+
+        harmonic.type = "triangle";
+        harmonic.frequency.setValueAtTime(n.f * 2, now + n.t);
+
+        gain.gain.setValueAtTime(0.0001, now + n.t);
+        gain.gain.linearRampToValueAtTime(vol, now + n.t + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + n.t + n.dur);
+
+        osc.connect(gain);
+        harmonic.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + n.t);
+        harmonic.start(now + n.t);
+        osc.stop(now + n.t + n.dur + 0.05);
+        harmonic.stop(now + n.t + n.dur + 0.05);
+      });
+    } catch {
+      // Audio autoplay policy fallback
+    }
   }
 
   // ==========================================================
@@ -437,6 +374,7 @@
       showToast(`Đã tạm dừng "${task.name}" ở ${formatClock(task.remainingSeconds)}.`);
     } else {
       // User pressed START or RESUME
+      playStartSound();
       pauseRunningTask(false);
 
       if (typeof task.remainingSeconds !== "number" || task.remainingSeconds <= 0) {
@@ -470,6 +408,7 @@
 
     if (rem <= 0) {
       // TASK COMPLETED VIA COUNTDOWN!
+      playFinishSound();
       runTask.timerStatus = "done";
       runTask.done = true;
       runTask.completedAt = new Date().toISOString();
@@ -579,7 +518,6 @@
     renderTimerColumn();
     renderCalendarColumn();
     renderHistoryDetail();
-    updateMusicUI();
   }
 
   function renderTasksColumn() {
@@ -832,15 +770,6 @@
     $("taskDialog").close();
   }
 
-  function openPlaylistModal() {
-    renderPlaylist();
-    $("playlistDialog").showModal();
-  }
-
-  function closePlaylistModal() {
-    $("playlistDialog").close();
-  }
-
   // Task Form Submit
   $("taskForm").addEventListener("submit", e => {
     e.preventDefault();
@@ -964,63 +893,6 @@
   $("startPauseBtn").addEventListener("click", startPauseTimer);
   $("resetTimerBtn").addEventListener("click", resetTimer);
 
-  // Music Buttons & Playlist Modal Triggers
-  $("topbarMusicBtn").addEventListener("click", openPlaylistModal);
-  $("openPlaylistBtn").addEventListener("click", openPlaylistModal);
-  $("openPlaylistDockBtn").addEventListener("click", openPlaylistModal);
-  $("closePlaylistBtn").addEventListener("click", closePlaylistModal);
-
-  // Quick Music Controls (Column 2)
-  $("tmbPlayBtn").addEventListener("click", togglePlayMusic);
-  $("tmbNextBtn").addEventListener("click", nextTrack);
-  $("tmbPrevBtn").addEventListener("click", prevTrack);
-
-  // Bottom Dock Controls
-  $("dockPlayBtn").addEventListener("click", togglePlayMusic);
-  $("dockNextBtn").addEventListener("click", nextTrack);
-  $("dockPrevBtn").addEventListener("click", prevTrack);
-
-  // Modal Music Controls
-  $("mpbPlayBtn").addEventListener("click", togglePlayMusic);
-  $("mpbNextBtn").addEventListener("click", nextTrack);
-  $("mpbPrevBtn").addEventListener("click", prevTrack);
-
-  // Music Volume Sliders
-  $("musicVolumeSlider").addEventListener("input", e => handleMusicVolumeChange(e.target.value));
-  $("modalVolSlider").addEventListener("input", e => handleMusicVolumeChange(e.target.value));
-
-  // Music Mute Toggle
-  $("musicMuteBtn").addEventListener("click", () => {
-    if (audioEl.volume > 0) {
-      handleMusicVolumeChange(0);
-    } else {
-      handleMusicVolumeChange(65);
-    }
-  });
-
-  // Playlist Region Filters
-  $("playlistRegionFilters").addEventListener("click", e => {
-    const chip = e.target.closest(".region-chip");
-    if (!chip) return;
-    playlistRegionFilter = chip.dataset.region;
-    document.querySelectorAll(".region-chip").forEach(c => c.classList.toggle("active", c === chip));
-    renderPlaylist();
-  });
-
-  // Playlist Search
-  $("playlistSearchInput").addEventListener("input", e => {
-    playlistSearchQuery = e.target.value;
-    renderPlaylist();
-  });
-
-  // Playlist Item Click
-  $("playlistScroll").addEventListener("click", e => {
-    const row = e.target.closest(".track-row");
-    if (!row) return;
-    const idx = parseInt(row.dataset.index, 10);
-    if (!isNaN(idx)) playTrack(idx);
-  });
-
   // Export / Import
   $("exportBtn").addEventListener("click", () => {
     snapshot();
@@ -1093,5 +965,4 @@
   // Startup initialization
   rolloverIfNeeded();
   render();
-  renderPlaylist();
 })();

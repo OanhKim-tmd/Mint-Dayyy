@@ -32,12 +32,6 @@
         <span class="pill-icon">✨</span>
         <span id="headerSummary">0/0 việc · 0m tập trung</span>
       </div>
-
-      <!-- Quick Music Button in Topbar -->
-      <button class="pill-badge music-topbar-pill" id="topbarMusicBtn" title="Mở danh sách 25 bài nhạc động lực">
-        <span class="music-note-icon">🎵</span>
-        <span id="topbarMusicText">Nhạc động lực (25 bài)</span>
-      </button>
     </div>
 
     <div class="topbar-right">
@@ -148,20 +142,6 @@
         <button class="btn btn-timer-sub" id="resetTimerBtn" disabled title="Đặt lại đồng hồ việc này về ban đầu">↺</button>
       </div>
 
-      <!-- Compact Music Bar in Column 2 -->
-      <div class="timer-music-bar">
-        <div class="tmb-info">
-          <span class="tmb-dot" id="tmbDot"></span>
-          <span class="tmb-title" id="tmbTitle">River Flows in You · Yiruma</span>
-        </div>
-        <div class="tmb-actions">
-          <button class="btn-tmb-ctrl" id="tmbPrevBtn" title="Bài trước">⏮</button>
-          <button class="btn-tmb-ctrl btn-tmb-play" id="tmbPlayBtn" title="Phát / Tạm dừng">▶</button>
-          <button class="btn-tmb-ctrl" id="tmbNextBtn" title="Bài tiếp theo">⏭</button>
-          <button class="btn-tmb-playlist" id="openPlaylistBtn" title="Danh sách 25 bài">📋 List</button>
-        </div>
-      </div>
-
       <!-- Today Focus Stats -->
       <div class="focus-summary-grid">
         <div class="focus-kpi">
@@ -242,38 +222,6 @@
     </section>
   </main>
 
-  <!-- Clean Floating Music Player Dock (Bottom) -->
-  <aside class="music-dock" id="musicDock" aria-label="Thanh điều khiển nhạc">
-    <div class="dock-left">
-      <button class="dock-disc-btn" id="dockPlayBtn" title="Phát / Tạm dừng">
-        <span class="dock-disc-icon" id="dockPlayIcon">▶</span>
-      </button>
-      <div class="dock-track-info">
-        <span class="dock-track-title" id="dockTrackTitle">River Flows in You</span>
-        <span class="dock-track-artist" id="dockTrackArtist">Yiruma · Á · Lo-fi Piano</span>
-      </div>
-      <div class="dock-track-controls">
-        <button class="dock-icon-btn" id="dockPrevBtn" title="Bài trước">⏮</button>
-        <button class="dock-icon-btn" id="dockNextBtn" title="Bài tiếp">⏭</button>
-      </div>
-    </div>
-
-    <div class="dock-center">
-      <!-- Music Volume Slider -->
-      <div class="dock-vol-group">
-        <span class="vol-icon" id="musicMuteBtn" title="Bật/Tắt âm">🎵</span>
-        <input type="range" class="vol-slider" id="musicVolumeSlider" min="0" max="100" value="65" title="Âm lượng nhạc">
-        <span class="vol-val" id="musicVolVal">65%</span>
-      </div>
-    </div>
-
-    <div class="dock-right">
-      <button class="btn btn-dock-action" id="openPlaylistDockBtn">
-        <span>📋</span> <span>Playlist 25 Bài</span>
-      </button>
-    </div>
-  </aside>
-
   <!-- Dialog: Thêm / Sửa Task -->
   <dialog id="taskDialog">
     <form id="taskForm" method="dialog">
@@ -325,64 +273,8 @@
     </form>
   </dialog>
 
-  <!-- Dialog: 25 BÀI NHẠC ĐỘNG LỰC Á - ÂU - MỸ -->
-  <dialog id="playlistDialog" class="playlist-modal">
-    <div class="playlist-modal-wrap">
-      <div class="dialog-header playlist-modal-header">
-        <div class="pmh-title">
-          <span class="pmh-badge">🎧🌸</span>
-          <div>
-            <h2>25 Bản Nhạc Động Lực</h2>
-            <p class="dialog-sub">Tuyển tập nhạc truyền cảm hứng & tập trung Á · Âu · Mỹ</p>
-          </div>
-        </div>
-        <button type="button" class="btn-close" id="closePlaylistBtn" aria-label="Đóng">✕</button>
-      </div>
-
-      <!-- Player Banner inside Modal -->
-      <div class="modal-player-bar">
-        <div class="mpb-meta">
-          <span class="mpb-tag" id="mpbTag">🌸 CHÂU Á</span>
-          <h3 id="mpbTitle">River Flows in You</h3>
-          <p id="mpbArtist">Yiruma · Piano Focus</p>
-        </div>
-        <div class="mpb-ctrls">
-          <button class="btn-mpb-circle" id="mpbPrevBtn" title="Bài trước">⏮</button>
-          <button class="btn-mpb-circle btn-mpb-play" id="mpbPlayBtn" title="Phát / Tạm dừng">▶</button>
-          <button class="btn-mpb-circle" id="mpbNextBtn" title="Bài tiếp theo">⏭</button>
-        </div>
-        <div class="mpb-vol">
-          <span class="mpb-vol-label">Âm lượng:</span>
-          <input type="range" class="vol-slider" id="modalVolSlider" min="0" max="100" value="65">
-          <strong id="modalVolText">65%</strong>
-        </div>
-      </div>
-
-      <!-- Filter & Search Bar -->
-      <div class="playlist-filter-bar">
-        <div class="playlist-region-filters" id="playlistRegionFilters">
-          <button class="region-chip active" data-region="all">Tất cả (25)</button>
-          <button class="region-chip" data-region="Á">🌸 Châu Á (10)</button>
-          <button class="region-chip" data-region="Âu">🍃 Châu Âu (8)</button>
-          <button class="region-chip" data-region="Mỹ">✨ Bắc Mỹ (7)</button>
-        </div>
-        <div class="playlist-search-wrap">
-          <input type="text" id="playlistSearchInput" placeholder="Tìm tên bài, nghệ sĩ..." autocomplete="off">
-        </div>
-      </div>
-
-      <!-- Scrollable Track List -->
-      <div class="playlist-scroll" id="playlistScroll">
-        <!-- 25 bài nhạc render động bằng JavaScript -->
-      </div>
-    </div>
-  </dialog>
-
   <!-- Notification Toast -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <!-- HTML5 Audio Element for Music -->
-  <audio id="musicAudio" preload="none"></audio>
 
   <script src="app.js"></script>
 </body>
