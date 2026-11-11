@@ -1,0 +1,94 @@
+{
+  "version": 2,
+  "date": "2026-11-10",
+  "owner": "Kim Oanh",
+  "lastUpdated": "2026-11-11T08:00:00.000Z",
+  "tasks": [
+    {
+      "id": "task-1",
+      "name": "Lên lịch trình & mục tiêu học tập ngày mới",
+      "minutes": 20,
+      "category": "Học tập",
+      "repeat": "daily",
+      "done": true,
+      "completedAt": "2026-11-10T08:30:00.000Z",
+      "remainingSeconds": 0,
+      "timerStatus": "done"
+    },
+    {
+      "id": "task-2",
+      "name": "Thực hành cấu trúc dữ liệu & giải thuật",
+      "minutes": 45,
+      "category": "Học tập",
+      "repeat": "daily",
+      "done": true,
+      "completedAt": "2026-11-10T10:15:00.000Z",
+      "remainingSeconds": 0,
+      "timerStatus": "done"
+    },
+    {
+      "id": "task-3",
+      "name": "Hoàn thiện giao diện & tính năng Mint Day",
+      "minutes": 35,
+      "category": "Công việc",
+      "repeat": "none",
+      "done": true,
+      "completedAt": "2026-11-10T13:45:00.000Z",
+      "remainingSeconds": 0,
+      "timerStatus": "done"
+    },
+    {
+      "id": "task-4",
+      "name": "Uống 2L nước & tập yoga nhẹ buổi chiều",
+      "minutes": 25,
+      "category": "Cá nhân",
+      "repeat": "daily",
+      "done": false,
+      "completedAt": null,
+      "remainingSeconds": 1500,
+      "timerStatus": "idle"
+    },
+    {
+      "id": "task-5",
+      "name": "Đọc 15 trang sách trước khi ngủ",
+      "minutes": 20,
+      "category": "Tối",
+      "repeat": "daily",
+      "done": false,
+      "completedAt": null,
+      "remainingSeconds": 1200,
+      "timerStatus": "idle"
+    },
+    {
+      "id": "task-6",
+      "name": "Tổng kết tuần & lập kế hoạch tuần mới",
+      "minutes": 30,
+      "category": "Học tập",
+      "repeat": "weekly",
+      "done": false,
+      "completedAt": null,
+      "remainingSeconds": 1800,
+      "timerStatus": "idle"
+    }
+  ],
+  "elapsedToday": 6000,
+  "history": {
+    "2026-11-09": {
+      "tasks": [
+        { "id": "h-1", "name": "Ôn tập chuyên đề Machine Learning", "minutes": 45, "category": "Học tập", "repeat": "daily", "done": true, "completedAt": "2026-11-09T09:30:00.000Z" },
+        { "id": "h-2", "name": "Hoàn thành bài tập Lab & commit Git", "minutes": 40, "category": "Công việc", "repeat": "none", "done": true, "completedAt": "2026-11-09T14:20:00.000Z" },
+        { "id": "h-3", "name": "Dọn dẹp bàn học & thư giãn", "minutes": 15, "category": "Cá nhân", "repeat": "daily", "done": true, "completedAt": "2026-11-09T17:00:00.000Z" }
+      ],
+      "focusSeconds": 6000,
+      "savedAt": "2026-11-09T22:00:00.000Z"
+    },
+    "2026-11-08": {
+      "tasks": [
+        { "id": "h-4", "name": "Tổng kết tuần & lập kế hoạch tuần mới", "minutes": 30, "category": "Học tập", "repeat": "weekly", "done": true, "completedAt": "2026-11-08T10:00:00.000Z" },
+        { "id": "h-5", "name": "Đi dạo công viên & nạp năng lượng", "minutes": 60, "category": "Cá nhân", "repeat": "weekly", "done": true, "completedAt": "2026-11-08T16:30:00.000Z" }
+      ],
+      "focusSeconds": 5400,
+      "savedAt": "2026-11-08T21:30:00.000Z"
+    }
+  }
+}
