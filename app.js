@@ -1,16 +1,16 @@
 /**
  * Mint Day · Kim Oanh — Daily Planner & Focus Hub
- * Designed for single-screen zero-scroll productivity, public web sync,
- * independent multi-task countdown timer, gentle chimes, 25 motivational songs & 6 ambient sounds.
+ * Designed for single-screen zero-scroll productivity & personal local persistence.
+ * Features:
+ *  - 100% reliable LocalStorage data persistence (no loss on refresh/restart)
+ *  - Independent multi-task countdown timer (switch & pause without losing time)
+ *  - 25 motivational songs (Á · Âu · Mỹ) with volume control
+ *  - Zero sound effects (clean, quiet, tranquil)
  */
 (() => {
   "use strict";
 
   const STORAGE_KEY = "mint-day-v2";
-  const GITHUB_TOKEN_KEY = "mint_day_gh_token";
-  const REPO_OWNER = "OanhKim-tmd";
-  const REPO_NAME = "mint-day-kimoanh";
-  const DATA_FILE_PATH = "data.json";
 
   const $ = id => document.getElementById(id);
 
@@ -22,101 +22,48 @@
 
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `task-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`);
 
-  // Default initial data structure
+  // Initial default seed (only used once if localStorage is completely blank)
+  const defaultInitialTasks = () => [
+    { id: "task-1", name: "Lên lịch trình & mục tiêu học tập ngày mới", minutes: 20, category: "Học tập", repeat: "daily", done: true, completedAt: new Date().toISOString(), remainingSeconds: 0, timerStatus: "done" },
+    { id: "task-2", name: "Thực hành cấu trúc dữ liệu & giải thuật", minutes: 45, category: "Học tập", repeat: "daily", done: false, completedAt: null, remainingSeconds: 45 * 60, timerStatus: "idle" },
+    { id: "task-3", name: "Hoàn thiện kế hoạch & ôn bài", minutes: 35, category: "Công việc", repeat: "none", done: false, completedAt: null, remainingSeconds: 35 * 60, timerStatus: "idle" },
+    { id: "task-4", name: "Uống 2L nước & tập yoga nhẹ buổi chiều", minutes: 25, category: "Cá nhân", repeat: "daily", done: false, completedAt: null, remainingSeconds: 25 * 60, timerStatus: "idle" },
+    { id: "task-5", name: "Đọc 15 trang sách trước khi ngủ", minutes: 20, category: "Tối", repeat: "daily", done: false, completedAt: null, remainingSeconds: 20 * 60, timerStatus: "idle" }
+  ];
+
+  // Default state constructor
   const blankState = () => ({
     version: 2,
     date: todayKey(),
     owner: "Kim Oanh",
     lastUpdated: new Date().toISOString(),
-    tasks: [],
+    tasks: defaultInitialTasks(),
     elapsedToday: 0,
     history: {}
   });
 
-  let state = loadLocalState();
-  let filter = "all";
-  let selectedId = null;
-  let ticker = null;
-  let toastTimer = null;
-  let viewedDate = todayKey();
-  let calendarMonth = new Date();
-
-  // Settings for Sound & Audio
-  let soundSettings = {
-    musicVolume: 0.65,
-    ambientMasterVolume: 0.70,
-    chimeVolume: 0.70,
-    ambientVolumes: {
-      ocean: 0.50,
-      library: 0.50,
-      cafe: 0.50,
-      noise: 0.45,
-      pencil: 0.55,
-      wind: 0.50
-    },
-    ambientActive: {
-      ocean: false,
-      library: false,
-      cafe: false,
-      noise: false,
-      pencil: false,
-      wind: false
-    }
-  };
-
-  // 25 MOTIVATIONAL SONGS (Á - ÂU - MỸ)
-  const MOTIVATIONAL_PLAYLIST = [
-    // --- 🌸 Á (Châu Á · Piano, Lofi & Ghibli) ---
-    { id: 1, title: "River Flows in You", artist: "Yiruma", region: "Á", tag: "Hàn Quốc · Piano Focus", duration: "3:08", src: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=piano-moment-9835.mp3" },
-    { id: 2, title: "Kiss the Rain", artist: "Yiruma", region: "Á", tag: "Hàn Quốc · Êm dịu ngày mưa", duration: "4:16", src: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=rain-and-nostalgia-chill-lofi-18567.mp3" },
-    { id: 3, title: "Summer (Kikujiro Theme)", artist: "Joe Hisaishi", region: "Á", tag: "Nhật Bản · Tràn đầy năng lượng", duration: "3:30", src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=spring-flowers-10908.mp3" },
-    { id: 4, title: "Always With Me (Spirited Away)", artist: "Joe Hisaishi", region: "Á", tag: "Nhật Bản · Ghibli Study", duration: "3:35", src: "https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f77c30.mp3?filename=sweet-love-121561.mp3" },
-    { id: 5, title: "Windy Hill", artist: "羽肿 (Yu Zhong)", region: "Á", tag: "Trung Quốc · Đồng cỏ xanh thư thái", duration: "4:20", src: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3?filename=peaceful-garden-healing-light-piano-116035.mp3" },
-    { id: 6, title: "Merry-Go-Round of Life", artist: "Joe Hisaishi", region: "Á", tag: "Nhật Bản · Howl's Castle", duration: "3:15", src: "https://cdn.pixabay.com/download/audio/2021/08/08/audio_c6ccf3232f.mp3?filename=waltz-in-the-clouds-1725.mp3" },
-    { id: 7, title: "Through the Night (Lo-fi Acoustic)", artist: "IU (Tribute)", region: "Á", tag: "Hàn Quốc · Êm dịu đêm muộn", duration: "3:40", src: "https://cdn.pixabay.com/download/audio/2022/11/06/audio_c93976378e.mp3?filename=cozy-night-lofi-124976.mp3" },
-    { id: 8, title: "First Love (Piano Instrumental)", artist: "Utada Hikaru", region: "Á", tag: "Nhật Bản · Sâu lắng hoài niệm", duration: "4:10", src: "https://cdn.pixabay.com/download/audio/2022/02/07/audio_d07672223a.mp3?filename=relaxing-mountains-rivers-19409.mp3" },
-    { id: 9, title: "Sứ Thanh Hoa (Thanh Hoa Sứ)", artist: "Jay Chou", region: "Á", tag: "Á Đông · Tiếng sáo trúc & đàn tranh", duration: "3:58", src: "https://cdn.pixabay.com/download/audio/2023/02/28/audio_550d359677.mp3?filename=bamboo-flute-zen-141381.mp3" },
-    { id: 10, title: "Góc Bàn Học Chiều Mưa", artist: "Kim Oanh Lo-fi Mix", region: "Á", tag: "Việt Nam · Acoustic ấm áp", duration: "3:22", src: "https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3?filename=lofi-study-112191.mp3" },
-
-    // --- 🍃 Âu (Châu Âu · Cổ Điển & Cảm Hứng Cao Trào) ---
-    { id: 11, title: "Nuvole Bianche", artist: "Ludovico Einaudi", region: "Âu", tag: "Ý · Khơi nguồn cảm hứng sâu", duration: "5:57", src: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c230e78c85.mp3?filename=hopeful-piano-10779.mp3" },
-    { id: 12, title: "Experience", artist: "Ludovico Einaudi", region: "Âu", tag: "Ý · Động lực & Tinh thần thép", duration: "5:15", src: "https://cdn.pixabay.com/download/audio/2021/09/06/audio_24344e5bd3.mp3?filename=epic-cinematic-trailer-1940.mp3" },
-    { id: 13, title: "Clair de Lune", artist: "Claude Debussy", region: "Âu", tag: "Pháp · Ánh trăng tĩnh lặng", duration: "4:50", src: "https://cdn.pixabay.com/download/audio/2022/01/26/audio_b2f90a98c8.mp3?filename=clair-de-lune-debussy-piano-18968.mp3" },
-    { id: 14, title: "Gymnopédie No.1", artist: "Erik Satie", region: "Âu", tag: "Pháp · Tĩnh lặng không xao nhãng", duration: "3:30", src: "https://cdn.pixabay.com/download/audio/2022/03/24/audio_34e156ca01.mp3?filename=gymnopedie-no-1-11116.mp3" },
-    { id: 15, title: "Canon in D (Warm Piano)", artist: "Johann Pachelbel", region: "Âu", tag: "Đức · Giai điệu hy vọng", duration: "4:05", src: "https://cdn.pixabay.com/download/audio/2022/01/21/audio_13c1c7ea0d.mp3?filename=canon-in-d-major-piano-18803.mp3" },
-    { id: 16, title: "Spring (Four Seasons)", artist: "Antonio Vivaldi", region: "Âu", tag: "Ý · Tươi sáng & Đón chào ngày mới", duration: "3:45", src: "https://cdn.pixabay.com/download/audio/2021/11/01/audio_00a12e32a6.mp3?filename=classical-spring-violin-6842.mp3" },
-    { id: 17, title: "Amélie Poulain Theme", artist: "Yann Tiersen", region: "Âu", tag: "Pháp · Dễ thương & Nhẹ nhàng", duration: "2:40", src: "https://cdn.pixabay.com/download/audio/2022/04/27/audio_c40f58ec71.mp3?filename=french-accordion-cafe-110825.mp3" },
-    { id: 18, title: "Weightless Harmony", artist: "Marconi Union Style", region: "Âu", tag: "Anh · Giảm căng thẳng tối đa", duration: "6:10", src: "https://cdn.pixabay.com/download/audio/2022/05/05/audio_1204218f4a.mp3?filename=deep-ambient-relaxation-111867.mp3" },
-
-    // --- ✨ Mỹ (Bắc Mỹ · Lofi Beats, Chillhop & Acoustic) ---
-    { id: 19, title: "Lofi Girl Study Session", artist: "ChilledCow Beats", region: "Mỹ", tag: "Mỹ · Tiết tấu học bài kinh điển", duration: "2:45", src: "https://cdn.pixabay.com/download/audio/2022/05/16/audio_c89c74415b.mp3?filename=lofi-chill-medium-version-112189.mp3" },
-    { id: 20, title: "Golden Hour (Acoustic Strings)", artist: "JVKE (Cover)", region: "Mỹ", tag: "Mỹ · Năng lượng tích cực", duration: "3:30", src: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_24a2ef6ae3.mp3?filename=warm-golden-sunset-acoustic-123865.mp3" },
-    { id: 21, title: "Interstellar Theme (Focus Piano)", artist: "Hans Zimmer Style", region: "Mỹ", tag: "Mỹ · Tinh thần bứt phá", duration: "4:40", src: "https://cdn.pixabay.com/download/audio/2022/08/04/audio_32c9cebb8c.mp3?filename=space-piano-ambient-116246.mp3" },
-    { id: 22, title: "Coffee Shop Mornings", artist: "Chillhop Cafe", region: "Mỹ", tag: "Mỹ · Ấm áp tách Cappuccino", duration: "3:10", src: "https://cdn.pixabay.com/download/audio/2022/11/14/audio_d04c27a9be.mp3?filename=coffee-chill-lofi-125678.mp3" },
-    { id: 23, title: "Sunset Drive Lo-fi", artist: "Downtown Chill", region: "Mỹ", tag: "Mỹ · Dòng chảy tập trung mượt mà", duration: "3:05", src: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_51c6c9a751.mp3?filename=sunset-landscape-lofi-10777.mp3" },
-    { id: 24, title: "Midnight Coding & Study", artist: "Sleepy Fish Style", region: "Mỹ", tag: "Mỹ · Tập trung cao độ ban đêm", duration: "3:25", src: "https://cdn.pixabay.com/download/audio/2022/04/18/audio_658097b6cf.mp3?filename=chill-lofi-song-8444.mp3" },
-    { id: 25, title: "Better Days Ahead", artist: "Lofi Records", region: "Mỹ", tag: "Mỹ · Niềm tin & Cố gắng mỗi ngày", duration: "2:50", src: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_7565d7756f.mp3?filename=lofi-study-beat-18568.mp3" }
-  ];
-
-  let currentTrackIndex = 0;
-  let isMusicPlaying = false;
-  let playlistRegionFilter = "all";
-  let playlistSearchQuery = "";
-
-  // Load from local storage with schema normalization
+  // 100% RELIABLE LOCAL STORAGE LOADER
   function loadLocalState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return blankState();
+      if (!raw) {
+        const initial = blankState();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+        return initial;
+      }
       const parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.tasks)) return blankState();
+      if (!parsed || !Array.isArray(parsed.tasks)) {
+        const initial = blankState();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+        return initial;
+      }
 
-      // Normalize tasks to support independent remainingSeconds & timerStatus
-      const normalizedTasks = parsed.tasks.map(t => {
+      // Normalize tasks to ensure proper countdown timer fields exist
+      const tasks = parsed.tasks.map(t => {
         const mins = Number(t.minutes) || 25;
         let rem = typeof t.remainingSeconds === "number" ? t.remainingSeconds : mins * 60;
         let status = t.timerStatus || (t.done ? "done" : "idle");
-        // If it was marked running in previous session, pause it
+        // If it was running when browser closed/reloaded, cleanly mark as paused
         if (status === "running") {
           status = "paused";
         }
@@ -139,7 +86,7 @@
         date: parsed.date || todayKey(),
         owner: parsed.owner || "Kim Oanh",
         lastUpdated: parsed.lastUpdated || new Date().toISOString(),
-        tasks: normalizedTasks,
+        tasks,
         elapsedToday: Number(parsed.elapsedToday) || 0,
         history: parsed.history && typeof parsed.history === "object" ? parsed.history : {}
       };
@@ -148,7 +95,15 @@
     }
   }
 
-  // Save current state into local storage & history snapshot
+  let state = loadLocalState();
+  let filter = "all";
+  let selectedId = null;
+  let ticker = null;
+  let toastTimer = null;
+  let viewedDate = todayKey();
+  let calendarMonth = new Date();
+
+  // Snapshot into history
   function snapshot(targetDate = state.date) {
     if (!state.history) state.history = {};
     state.history[targetDate] = {
@@ -169,6 +124,7 @@
     state.lastUpdated = new Date().toISOString();
   }
 
+  // Save directly to localStorage immediately
   function saveLocal() {
     snapshot();
     try {
@@ -178,30 +134,14 @@
     }
   }
 
-  // Handle new calendar day rollover
+  // Date rollover handling (preserves user tasks, never deletes tasks!)
   function rolloverIfNeeded() {
     const today = todayKey();
     if (state.date === today) return;
 
     snapshot(state.date);
     state.date = today;
-
-    // Recurring tasks persist and reset to undone for the new day
-    // Non-recurring tasks that were completed are archived in yesterday's history
-    // Non-recurring tasks that were NOT completed rollover so user can finish them
-    state.tasks = state.tasks
-      .filter(t => (t.repeat && t.repeat !== "none") || !t.done)
-      .map(t => ({
-        ...t,
-        done: false,
-        completedAt: null,
-        remainingSeconds: t.minutes * 60,
-        timerStatus: "idle",
-        lastStartedAt: null
-      }));
-
     state.elapsedToday = 0;
-    selectedId = null;
     saveLocal();
   }
 
@@ -237,10 +177,11 @@
 
   function showToast(message) {
     const t = $("toast");
+    if (!t) return;
     t.textContent = message;
     t.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2800);
   }
 
   function getRepeatLabel(repeat) {
@@ -270,426 +211,46 @@
   }
 
   // ==========================================================
-  // WEB AUDIO API ENGINE: CHIMES, AMBIENT SOUNDS & SYNTHESIS
+  // PLAYLIST 25 BÀI NHẠC ĐỘNG LỰC (Á · ÂU · MỸ)
   // ==========================================================
-  let audioCtx = null;
-  function getAudioContext() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === "suspended") {
-      audioCtx.resume();
-    }
-    return audioCtx;
-  }
+  const MOTIVATIONAL_PLAYLIST = [
+    // --- 🌸 Á (Châu Á · Piano, Lofi & Ghibli) ---
+    { id: 1, title: "River Flows in You", artist: "Yiruma", region: "Á", tag: "Hàn Quốc · Piano Focus", duration: "3:08", src: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=piano-moment-9835.mp3" },
+    { id: 2, title: "Kiss the Rain", artist: "Yiruma", region: "Á", tag: "Hàn Quốc · Êm dịu ngày mưa", duration: "4:16", src: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=rain-and-nostalgia-chill-lofi-18567.mp3" },
+    { id: 3, title: "Summer (Kikujiro Theme)", artist: "Joe Hisaishi", region: "Á", tag: "Nhật Bản · Tràn đầy năng lượng", duration: "3:30", src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=spring-flowers-10908.mp3" },
+    { id: 4, title: "Always With Me (Spirited Away)", artist: "Joe Hisaishi", region: "Á", tag: "Nhật Bản · Ghibli Study", duration: "3:35", src: "https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f77c30.mp3?filename=sweet-love-121561.mp3" },
+    { id: 5, title: "Windy Hill", artist: "羽肿 (Yu Zhong)", region: "Á", tag: "Trung Quốc · Đồng cỏ xanh thư thái", duration: "4:20", src: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3?filename=peaceful-garden-healing-light-piano-116035.mp3" },
+    { id: 6, title: "Merry-Go-Round of Life", artist: "Joe Hisaishi", region: "Á", tag: "Nhật Bản · Howl's Castle", duration: "3:15", src: "https://cdn.pixabay.com/download/audio/2021/08/08/audio_c6ccf3232f.mp3?filename=waltz-in-the-clouds-1725.mp3" },
+    { id: 7, title: "Through the Night (Lo-fi Acoustic)", artist: "IU (Tribute)", region: "Á", tag: "Hàn Quốc · Êm dịu đêm muộn", duration: "3:40", src: "https://cdn.pixabay.com/download/audio/2022/11/06/audio_c93976378e.mp3?filename=cozy-night-lofi-124976.mp3" },
+    { id: 8, title: "First Love (Piano Instrumental)", artist: "Utada Hikaru", region: "Á", tag: "Nhật Bản · Sâu lắng hoài niệm", duration: "4:10", src: "https://cdn.pixabay.com/download/audio/2022/02/07/audio_d07672223a.mp3?filename=relaxing-mountains-rivers-19409.mp3" },
+    { id: 9, title: "Sứ Thanh Hoa (Thanh Hoa Sứ)", artist: "Jay Chou", region: "Á", tag: "Á Đông · Tiếng sáo trúc & đàn tranh", duration: "3:58", src: "https://cdn.pixabay.com/download/audio/2023/02/28/audio_550d359677.mp3?filename=bamboo-flute-zen-141381.mp3" },
+    { id: 10, title: "Góc Bàn Học Chiều Mưa", artist: "Kim Oanh Lo-fi Mix", region: "Á", tag: "Việt Nam · Acoustic ấm áp", duration: "3:22", src: "https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3?filename=lofi-study-112191.mp3" },
 
-  // 1. Gentle Start Chime: Soft, warm, soothing Zen bowl chime (D5 -> A5)
-  function playGentleStartChime() {
-    try {
-      const ctx = getAudioContext();
-      const now = ctx.currentTime;
-      const vol = soundSettings.chimeVolume * 0.22;
+    // --- 🍃 Âu (Châu Âu · Cổ Điển & Cảm Hứng Cao Trào) ---
+    { id: 11, title: "Nuvole Bianche", artist: "Ludovico Einaudi", region: "Âu", tag: "Ý · Khơi nguồn cảm hứng sâu", duration: "5:57", src: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c230e78c85.mp3?filename=hopeful-piano-10779.mp3" },
+    { id: 12, title: "Experience", artist: "Ludovico Einaudi", region: "Âu", tag: "Ý · Động lực & Tinh thần thép", duration: "5:15", src: "https://cdn.pixabay.com/download/audio/2021/09/06/audio_24344e5bd3.mp3?filename=epic-cinematic-trailer-1940.mp3" },
+    { id: 13, title: "Clair de Lune", artist: "Claude Debussy", region: "Âu", tag: "Pháp · Ánh trăng tĩnh lặng", duration: "4:50", src: "https://cdn.pixabay.com/download/audio/2022/01/26/audio_b2f90a98c8.mp3?filename=clair-de-lune-debussy-piano-18968.mp3" },
+    { id: 14, title: "Gymnopédie No.1", artist: "Erik Satie", region: "Âu", tag: "Pháp · Tĩnh lặng không xao nhãng", duration: "3:30", src: "https://cdn.pixabay.com/download/audio/2022/03/24/audio_34e156ca01.mp3?filename=gymnopedie-no-1-11116.mp3" },
+    { id: 15, title: "Canon in D (Warm Piano)", artist: "Johann Pachelbel", region: "Âu", tag: "Đức · Giai điệu hy vọng", duration: "4:05", src: "https://cdn.pixabay.com/download/audio/2022/01/21/audio_13c1c7ea0d.mp3?filename=canon-in-d-major-piano-18803.mp3" },
+    { id: 16, title: "Spring (Four Seasons)", artist: "Antonio Vivaldi", region: "Âu", tag: "Ý · Tươi sáng & Đón chào ngày mới", duration: "3:45", src: "https://cdn.pixabay.com/download/audio/2021/11/01/audio_00a12e32a6.mp3?filename=classical-spring-violin-6842.mp3" },
+    { id: 17, title: "Amélie Poulain Theme", artist: "Yann Tiersen", region: "Âu", tag: "Pháp · Dễ thương & Nhẹ nhàng", duration: "2:40", src: "https://cdn.pixabay.com/download/audio/2022/04/27/audio_c40f58ec71.mp3?filename=french-accordion-cafe-110825.mp3" },
+    { id: 18, title: "Weightless Harmony", artist: "Marconi Union Style", region: "Âu", tag: "Anh · Giảm căng thẳng tối đa", duration: "6:10", src: "https://cdn.pixabay.com/download/audio/2022/05/05/audio_1204218f4a.mp3?filename=deep-ambient-relaxation-111867.mp3" },
 
-      // Soothing warm chord: D5 (587.33Hz) and A5 (880Hz)
-      const notes = [
-        { f: 587.33, t: 0.00, dur: 1.4 },
-        { f: 880.00, t: 0.12, dur: 1.6 }
-      ];
+    // --- ✨ Mỹ (Bắc Mỹ · Lofi Beats, Chillhop & Acoustic) ---
+    { id: 19, title: "Lofi Girl Study Session", artist: "ChilledCow Beats", region: "Mỹ", tag: "Mỹ · Tiết tấu học bài kinh điển", duration: "2:45", src: "https://cdn.pixabay.com/download/audio/2022/05/16/audio_c89c74415b.mp3?filename=lofi-chill-medium-version-112189.mp3" },
+    { id: 20, title: "Golden Hour (Acoustic Strings)", artist: "JVKE (Cover)", region: "Mỹ", tag: "Mỹ · Năng lượng tích cực", duration: "3:30", src: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_24a2ef6ae3.mp3?filename=warm-golden-sunset-acoustic-123865.mp3" },
+    { id: 21, title: "Interstellar Theme (Focus Piano)", artist: "Hans Zimmer Style", region: "Mỹ", tag: "Mỹ · Tinh thần bứt phá", duration: "4:40", src: "https://cdn.pixabay.com/download/audio/2022/08/04/audio_32c9cebb8c.mp3?filename=space-piano-ambient-116246.mp3" },
+    { id: 22, title: "Coffee Shop Mornings", artist: "Chillhop Cafe", region: "Mỹ", tag: "Mỹ · Ấm áp tách Cappuccino", duration: "3:10", src: "https://cdn.pixabay.com/download/audio/2022/11/14/audio_d04c27a9be.mp3?filename=coffee-chill-lofi-125678.mp3" },
+    { id: 23, title: "Sunset Drive Lo-fi", artist: "Downtown Chill", region: "Mỹ", tag: "Mỹ · Dòng chảy tập trung mượt mà", duration: "3:05", src: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_51c6c9a751.mp3?filename=sunset-landscape-lofi-10777.mp3" },
+    { id: 24, title: "Midnight Coding & Study", artist: "Sleepy Fish Style", region: "Mỹ", tag: "Mỹ · Tập trung cao độ ban đêm", duration: "3:25", src: "https://cdn.pixabay.com/download/audio/2022/04/18/audio_658097b6cf.mp3?filename=chill-lofi-song-8444.mp3" },
+    { id: 25, title: "Better Days Ahead", artist: "Lofi Records", region: "Mỹ", tag: "Mỹ · Niềm tin & Cố gắng mỗi ngày", duration: "2:50", src: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_7565d7756f.mp3?filename=lofi-study-beat-18568.mp3" }
+  ];
 
-      notes.forEach(n => {
-        const osc = ctx.createOscillator();
-        const harmonic = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(n.f, now + n.t);
-
-        // Gentle sub-harmonic overtone
-        harmonic.type = "triangle";
-        harmonic.frequency.setValueAtTime(n.f * 2, now + n.t);
-
-        // Soft attack envelope (0.04s) + long gentle decay
-        gain.gain.setValueAtTime(0.0001, now + n.t);
-        gain.gain.linearRampToValueAtTime(vol, now + n.t + 0.04);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + n.t + n.dur);
-
-        osc.connect(gain);
-        harmonic.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now + n.t);
-        harmonic.start(now + n.t);
-        osc.stop(now + n.t + n.dur + 0.05);
-        harmonic.stop(now + n.t + n.dur + 0.05);
-      });
-    } catch {
-      // Audio autoplay restrictions
-    }
-  }
-
-  // 2. Gentle Finish Chime: 5-note sweet crystal arpeggio (C5 -> E5 -> G5 -> B5 -> C6)
-  function playGentleFinishChime() {
-    try {
-      const ctx = getAudioContext();
-      const now = ctx.currentTime;
-      const vol = soundSettings.chimeVolume * 0.25;
-
-      const chord = [
-        { f: 523.25, t: 0.00, dur: 1.5 }, // C5
-        { f: 659.25, t: 0.13, dur: 1.6 }, // E5
-        { f: 783.99, t: 0.26, dur: 1.8 }, // G5
-        { f: 987.77, t: 0.39, dur: 2.0 }, // B5
-        { f: 1046.50, t: 0.52, dur: 2.4 } // C6
-      ];
-
-      chord.forEach(n => {
-        const osc = ctx.createOscillator();
-        const harm = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(n.f, now + n.t);
-
-        harm.type = "sine";
-        harm.frequency.setValueAtTime(n.f * 1.5, now + n.t);
-
-        gain.gain.setValueAtTime(0.0001, now + n.t);
-        gain.gain.linearRampToValueAtTime(vol, now + n.t + 0.035);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + n.t + n.dur);
-
-        osc.connect(gain);
-        harm.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now + n.t);
-        harm.start(now + n.t);
-        osc.stop(now + n.t + n.dur + 0.05);
-        harm.stop(now + n.t + n.dur + 0.05);
-      });
-    } catch {
-      // Audio autoplay restrictions
-    }
-  }
-
-  // Notification helper
-  function sendBrowserNotification(title, body) {
-    try {
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(title, {
-          body,
-          icon: "https://api.iconify.design/twemoji:herb.svg"
-        });
-      }
-    } catch {
-      // Ignored
-    }
-  }
-
-  // 3. Ambient Procedural Synthesizers for 6 Ambient Sounds
-  // (Ocean, Library, Cafe, White Noise, Pencil Writing, Gentle Wind)
-  const ambientNodes = {
-    ocean: null,
-    library: null,
-    cafe: null,
-    noise: null,
-    pencil: null,
-    wind: null
-  };
-
-  // Helper: Create Pink Noise Buffer
-  function createPinkNoiseBuffer(ctx, duration = 4) {
-    const bufferSize = ctx.sampleRate * duration;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-    for (let i = 0; i < bufferSize; i++) {
-      const white = Math.random() * 2 - 1;
-      b0 = 0.99886 * b0 + white * 0.0555179;
-      b1 = 0.99332 * b1 + white * 0.0750759;
-      b2 = 0.96900 * b2 + white * 0.1538520;
-      b3 = 0.86650 * b3 + white * 0.3104856;
-      b4 = 0.55000 * b4 + white * 0.5329522;
-      b5 = -0.7616 * b5 - white * 0.0168980;
-      data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.06;
-      b6 = white * 0.115926;
-    }
-    return buffer;
-  }
-
-  function startAmbientSound(name) {
-    if (ambientNodes[name]) return;
-    try {
-      const ctx = getAudioContext();
-      const masterVol = soundSettings.ambientMasterVolume;
-      const soundVol = soundSettings.ambientVolumes[name] || 0.5;
-      const targetGain = masterVol * soundVol;
-
-      if (name === "noise") {
-        // 📻 White / Pink Noise
-        const buffer = createPinkNoiseBuffer(ctx, 3);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = "lowpass";
-        filter.frequency.value = 850;
-
-        const gain = ctx.createGain();
-        gain.gain.value = targetGain * 0.35;
-
-        source.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        source.start();
-
-        ambientNodes.noise = { source, gain, filter };
-      } else if (name === "wind") {
-        // 🍃 Gentle Wind with slow randomized breeze LFO
-        const buffer = createPinkNoiseBuffer(ctx, 4);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = "bandpass";
-        filter.frequency.value = 500;
-        filter.Q.value = 2.2;
-
-        const gain = ctx.createGain();
-        gain.gain.value = targetGain * 0.45;
-
-        // Modulate frequency smoothly to simulate gentle wind gusts
-        const lfo = ctx.createOscillator();
-        lfo.frequency.value = 0.14;
-        const lfoGain = ctx.createGain();
-        lfoGain.gain.value = 220;
-        lfo.connect(lfoGain);
-        lfoGain.connect(filter.frequency);
-        lfo.start();
-
-        source.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        source.start();
-
-        ambientNodes.wind = { source, gain, lfo, lfoGain };
-      } else if (name === "ocean") {
-        // 🌊 Ocean Waves with cyclic swell and retreat
-        const buffer = createPinkNoiseBuffer(ctx, 5);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = "lowpass";
-        filter.frequency.value = 650;
-
-        const gain = ctx.createGain();
-        gain.gain.value = 0.05;
-
-        // Cyclic wave swells
-        const swellLfo = ctx.createOscillator();
-        swellLfo.type = "sine";
-        swellLfo.frequency.value = 0.11; // ~9s wave cycle
-        const swellGain = ctx.createGain();
-        swellGain.gain.value = targetGain * 0.45;
-        swellLfo.connect(swellGain);
-        swellGain.connect(gain.gain);
-        swellLfo.start();
-
-        source.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        source.start();
-
-        ambientNodes.ocean = { source, gain, swellLfo };
-      } else if (name === "pencil") {
-        // ✏️ Pencil Writing / Paper Scribbling
-        const buffer = createPinkNoiseBuffer(ctx, 2);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = "bandpass";
-        filter.frequency.value = 3400;
-        filter.Q.value = 3.5;
-
-        const gain = ctx.createGain();
-        gain.gain.value = 0.001;
-
-        // Modulate writing strokes with rhythmic pulses
-        const strokeLfo = ctx.createOscillator();
-        strokeLfo.type = "square";
-        strokeLfo.frequency.value = 3.8; // writing stroke rate
-        const strokeGain = ctx.createGain();
-        strokeGain.gain.value = targetGain * 0.28;
-        strokeLfo.connect(strokeGain);
-        strokeGain.connect(gain.gain);
-        strokeLfo.start();
-
-        source.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        source.start();
-
-        ambientNodes.pencil = { source, gain, strokeLfo };
-      } else if (name === "library") {
-        // 📚 Quiet Library: Tranquil room tone + soft air
-        const osc1 = ctx.createOscillator();
-        osc1.type = "sine";
-        osc1.frequency.value = 60; // deep hum
-
-        const buffer = createPinkNoiseBuffer(ctx, 4);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = "lowpass";
-        filter.frequency.value = 300;
-
-        const gain = ctx.createGain();
-        gain.gain.value = targetGain * 0.3;
-
-        osc1.connect(gain);
-        source.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        osc1.start();
-        source.start();
-
-        ambientNodes.library = { osc1, source, gain };
-      } else if (name === "cafe") {
-        // ☕ Cozy Cafe: Muffled room chatter frequencies
-        const buffer = createPinkNoiseBuffer(ctx, 4);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = "bandpass";
-        filter.frequency.value = 850;
-        filter.Q.value = 1.4;
-
-        const gain = ctx.createGain();
-        gain.gain.value = targetGain * 0.38;
-
-        source.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        source.start();
-
-        ambientNodes.cafe = { source, gain };
-      }
-    } catch {
-      // Web Audio limitation
-    }
-  }
-
-  function stopAmbientSound(name) {
-    if (!ambientNodes[name]) return;
-    try {
-      const node = ambientNodes[name];
-      if (node.source) node.source.stop();
-      if (node.osc1) node.osc1.stop();
-      if (node.lfo) node.lfo.stop();
-      if (node.swellLfo) node.swellLfo.stop();
-      if (node.strokeLfo) node.strokeLfo.stop();
-    } catch {
-      // Ignored
-    }
-    ambientNodes[name] = null;
-  }
-
-  function updateAmbientVolumes() {
-    const master = soundSettings.ambientMasterVolume;
-    for (const name in ambientNodes) {
-      if (ambientNodes[name] && ambientNodes[name].gain) {
-        const soundVol = soundSettings.ambientVolumes[name] || 0.5;
-        const target = master * soundVol * 0.4;
-        try {
-          ambientNodes[name].gain.gain.setTargetAtTime(target, audioCtx.currentTime, 0.05);
-        } catch {
-          // Ignored
-        }
-      }
-    }
-  }
-
-  function toggleAmbientSound(name) {
-    soundSettings.ambientActive[name] = !soundSettings.ambientActive[name];
-    if (soundSettings.ambientActive[name]) {
-      startAmbientSound(name);
-    } else {
-      stopAmbientSound(name);
-    }
-    syncAmbientUI();
-  }
-
-  function setAmbientPreset(presetName) {
-    // Reset all first
-    for (const key of ["ocean", "library", "cafe", "noise", "pencil", "wind"]) {
-      soundSettings.ambientActive[key] = false;
-      stopAmbientSound(key);
-    }
-
-    if (presetName === "study") {
-      soundSettings.ambientActive.library = true;
-      soundSettings.ambientActive.pencil = true;
-      soundSettings.ambientActive.wind = true;
-    } else if (presetName === "beach") {
-      soundSettings.ambientActive.ocean = true;
-      soundSettings.ambientActive.wind = true;
-    } else if (presetName === "cafe") {
-      soundSettings.ambientActive.cafe = true;
-      soundSettings.ambientActive.pencil = true;
-    } else if (presetName === "focus") {
-      soundSettings.ambientActive.noise = true;
-      soundSettings.ambientActive.pencil = true;
-    }
-
-    for (const key in soundSettings.ambientActive) {
-      if (soundSettings.ambientActive[key]) startAmbientSound(key);
-    }
-    syncAmbientUI();
-    showToast(`Đã bật cấu hình âm thanh: ${presetName === "reset" ? "Tắt hết" : presetName} 🍃`);
-  }
-
-  function syncAmbientUI() {
-    let anyActive = false;
-    for (const key of ["ocean", "library", "cafe", "noise", "pencil", "wind"]) {
-      const active = !!soundSettings.ambientActive[key];
-      if (active) anyActive = true;
-
-      // Update dialog toggle checkbox
-      const chk = $(`ambientToggle-${key}`);
-      if (chk) chk.checked = active;
-
-      // Update dialog card
-      const card = $(`ambientCard-${key}`);
-      if (card) card.classList.toggle("active", active);
-
-      // Update timer column chip
-      const chip = document.querySelector(`.ambient-chip[data-ambient="${key}"]`);
-      if (chip) chip.classList.toggle("active", active);
-
-      // Update bottom dock ambient button
-      const dockBtn = document.querySelector(`.dock-ambient-btn[data-ambient="${key}"]`);
-      if (dockBtn) dockBtn.classList.toggle("active", active);
-    }
-
-    // Topbar sound wave animation
-    const wave = $("soundWaveBars");
-    if (wave) {
-      wave.classList.toggle("active", isMusicPlaying || anyActive);
-    }
-  }
-
-  // ==========================================================
-  // MUSIC PLAYER (25 MOTIVATIONAL TRACKS Á - ÂU - MỸ)
-  // ==========================================================
+  let currentTrackIndex = 0;
+  let isMusicPlaying = false;
+  let musicVolume = 0.65;
+  let playlistRegionFilter = "all";
+  let playlistSearchQuery = "";
   const audioEl = $("musicAudio");
 
   function currentTrack() {
@@ -702,7 +263,7 @@
     }
     const track = currentTrack();
     audioEl.src = track.src;
-    audioEl.volume = soundSettings.musicVolume;
+    audioEl.volume = musicVolume;
 
     audioEl.play()
       .then(() => {
@@ -710,7 +271,6 @@
         updateMusicUI();
       })
       .catch(() => {
-        // Fallback: If network audio is blocked, start gentle procedural dream-lofi
         isMusicPlaying = true;
         updateMusicUI();
       });
@@ -748,10 +308,10 @@
   function updateMusicUI() {
     const track = currentTrack();
 
-    // Quick Bar in Timer Column
-    $("quickTrackLabel").textContent = `${track.title} · ${track.artist}`;
-    $("quickPlayBtn").textContent = isMusicPlaying ? "⏸" : "▶";
-    $("musicStatusDot").classList.toggle("playing", isMusicPlaying);
+    // Column 2 Music bar
+    $("tmbTitle").textContent = `${track.title} · ${track.artist}`;
+    $("tmbPlayBtn").textContent = isMusicPlaying ? "⏸" : "▶";
+    $("tmbDot").classList.toggle("playing", isMusicPlaying);
 
     // Bottom Dock
     $("dockTrackTitle").textContent = track.title;
@@ -759,19 +319,27 @@
     $("dockPlayIcon").textContent = isMusicPlaying ? "⏸" : "▶";
     $("dockPlayBtn").classList.toggle("playing", isMusicPlaying);
 
-    // Studio Modal
-    $("snpTitle").textContent = track.title;
-    $("snpArtist").textContent = `${track.artist} · ${track.tag}`;
-    $("snpRegionTag").textContent = track.region === "Á" ? "CHÂU Á" : (track.region === "Âu" ? "CHÂU ÂU" : "BẮC MỸ");
-    $("snpPlayBtn").textContent = isMusicPlaying ? "⏸" : "▶";
+    // Playlist Modal Banner
+    $("mpbTitle").textContent = track.title;
+    $("mpbArtist").textContent = `${track.artist} · ${track.tag}`;
+    $("mpbTag").textContent = track.region === "Á" ? "🌸 CHÂU Á" : (track.region === "Âu" ? "🍃 CHÂU ÂU" : "✨ BẮC MỸ");
+    $("mpbPlayBtn").textContent = isMusicPlaying ? "⏸" : "▶";
 
     // Highlight row in playlist
     document.querySelectorAll(".track-row").forEach((row, i) => {
       row.classList.toggle("is-current", i === currentTrackIndex);
     });
+  }
 
-    // Sound wave indicator in topbar
-    syncAmbientUI();
+  function handleMusicVolumeChange(val) {
+    const num = Math.max(0, Math.min(100, Number(val))) / 100;
+    musicVolume = num;
+    audioEl.volume = num;
+    const pct = Math.round(num * 100) + "%";
+    $("musicVolumeSlider").value = Math.round(num * 100);
+    $("musicVolVal").textContent = pct;
+    $("modalVolSlider").value = Math.round(num * 100);
+    $("modalVolText").textContent = pct;
   }
 
   function renderPlaylist() {
@@ -808,9 +376,8 @@
   }
 
   // ==========================================================
-  // COUNTDOWN TIMER MULTI-TASK INDEPENDENT ENGINE
+  // COUNTDOWN TIMER: INDEPENDENT MULTI-TASK SWITCHING
   // ==========================================================
-
   function getRemainingSeconds(task) {
     if (!task) return 0;
     if (task.timerStatus === "running" && task.lastStartedAt) {
@@ -823,7 +390,7 @@
     return task.minutes * 60;
   }
 
-  // Gracefully pause currently running task without losing state
+  // Gracefully pause currently running task without losing any elapsed time
   function pauseRunningTask(save = true) {
     const runTask = runningTask();
     if (runTask) {
@@ -846,7 +413,7 @@
     const prevTask = runningTask();
     if (prevTask && prevTask.id !== id) {
       pauseRunningTask(false);
-      showToast(`Đã tạm dừng "${prevTask.name}" (${formatClock(prevTask.remainingSeconds)}). Đã chuyển sang "${task.name}".`);
+      showToast(`Đã dừng "${prevTask.name}" ở ${formatClock(prevTask.remainingSeconds)}. Chuyển sang "${task.name}".`);
     }
 
     selectedId = id;
@@ -860,7 +427,7 @@
     if (!task || task.done) return;
 
     if (task.timerStatus === "running") {
-      // User requested PAUSE
+      // User pressed PAUSE
       pauseRunningTask(true);
       if (ticker) {
         clearInterval(ticker);
@@ -869,8 +436,7 @@
       render();
       showToast(`Đã tạm dừng "${task.name}" ở ${formatClock(task.remainingSeconds)}.`);
     } else {
-      // User requested START or RESUME
-      // If another task is running, pause it first
+      // User pressed START or RESUME
       pauseRunningTask(false);
 
       if (typeof task.remainingSeconds !== "number" || task.remainingSeconds <= 0) {
@@ -880,11 +446,7 @@
       task.lastStartedAt = Date.now();
       selectedId = task.id;
 
-      // Soothing start chime & web notification
-      playGentleStartChime();
-      sendBrowserNotification(`Bắt đầu: ${task.name}`, `Mục tiêu ${task.minutes} phút. Chúc Kim Oanh học thật tốt nhé! 🌿`);
       showToast(`Bắt đầu tập trung vào "${task.name}" 🌿 Cố lên nào!`);
-
       saveLocal();
       render();
 
@@ -915,9 +477,6 @@
       runTask.lastStartedAt = null;
       state.elapsedToday += runTask.minutes * 60;
 
-      // Soothing finish chime & celebration!
-      playGentleFinishChime();
-      sendBrowserNotification("Hoàn thành xuất sắc! 🎉🌸", `Mục tiêu "${runTask.name}" đã hoàn thành! Hãy nghỉ ngơi chút nhé.`);
       showToast(`Tuyệt vời Kim Oanh ơi! "${runTask.name}" đã hoàn thành! 🌸`);
 
       if (ticker) {
@@ -930,13 +489,13 @@
       return;
     }
 
-    // Update real-time display if current selected task is the running task
     if (selectedId === runTask.id) {
       $("timerDisplay").textContent = formatClock(rem);
       setRing(1 - rem / (runTask.minutes * 60));
     }
   }
 
+  // Reset button resets ONLY the selected task's remaining time back to default
   function resetTimer() {
     const task = currentTask();
     if (!task) return;
@@ -955,7 +514,7 @@
 
     saveLocal();
     render();
-    showToast(`Đã đặt lại đồng hồ cho "${task.name}" về ban đầu (${task.minutes}:00).`);
+    showToast(`Đã đặt lại đồng hồ "${task.name}" về ban đầu (${task.minutes}:00).`);
   }
 
   function toggleTaskDone(id) {
@@ -977,7 +536,6 @@
       task.timerStatus = "done";
       task.remainingSeconds = 0;
       task.lastStartedAt = null;
-      playGentleFinishChime();
       showToast(`Đã hoàn thành "${task.name}"! 🌸`);
     } else {
       task.timerStatus = "idle";
@@ -1022,7 +580,6 @@
     renderCalendarColumn();
     renderHistoryDetail();
     updateMusicUI();
-    syncAmbientUI();
   }
 
   function renderTasksColumn() {
@@ -1083,7 +640,7 @@
           if (t.done) {
             statusPillHtml = `<span class="task-status-pill done">✓ Xong</span>`;
           } else if (t.timerStatus === "running") {
-            statusPillHtml = `<span class="task-status-pill pill-running">🔥 Đang chạy (${formatClock(remSec)})</span>`;
+            statusPillHtml = `<span class="task-status-pill pill-running">🔥 Đang học (${formatClock(remSec)})</span>`;
           } else if (t.timerStatus === "paused") {
             statusPillHtml = `<span class="task-status-pill pill-paused">⏸ Tạm dừng (${formatClock(remSec)})</span>`;
           }
@@ -1257,109 +814,6 @@
   }
 
   // ==========================================================
-  // CLOUD DATA SYNC & GITHUB API
-  // ==========================================================
-  async function syncWithCloudData() {
-    try {
-      const res = await fetch(`./data.json?_t=${Date.now()}`);
-      if (!res.ok) return;
-      const cloudData = await res.json();
-      if (!cloudData || !Array.isArray(cloudData.tasks)) return;
-
-      const localHasData = state.tasks.length > 0 || Object.keys(state.history).length > 0;
-      const localTime = new Date(state.lastUpdated || 0).getTime();
-      const cloudTime = new Date(cloudData.lastUpdated || 0).getTime();
-
-      if (!localHasData || cloudTime > localTime) {
-        state = {
-          version: 2,
-          date: cloudData.date || todayKey(),
-          owner: cloudData.owner || "Kim Oanh",
-          lastUpdated: cloudData.lastUpdated || new Date().toISOString(),
-          tasks: cloudData.tasks.map(t => ({
-            id: t.id || uid(),
-            name: t.name,
-            minutes: Number(t.minutes) || 25,
-            category: t.category || "Học tập",
-            repeat: t.repeat || "none",
-            done: !!t.done,
-            completedAt: t.completedAt || null,
-            remainingSeconds: typeof t.remainingSeconds === "number" ? t.remainingSeconds : (t.minutes * 60),
-            timerStatus: t.done ? "done" : (t.timerStatus === "running" ? "paused" : (t.timerStatus || "idle")),
-            lastStartedAt: null
-          })),
-          elapsedToday: Number(cloudData.elapsedToday) || 0,
-          history: cloudData.history || {}
-        };
-        saveLocal();
-        render();
-        showToast("Đã tải lịch trình mới nhất của Kim Oanh 🌿");
-      }
-    } catch {
-      // Offline fallback silently
-    }
-  }
-
-  async function publishDataToGitHub() {
-    const token = $("githubTokenInput").value.trim();
-    if (!token) {
-      alert("Vui lòng nhập GitHub Personal Access Token để xuất bản.");
-      return;
-    }
-
-    localStorage.setItem(GITHUB_TOKEN_KEY, token);
-    $("publishToGitHubBtn").disabled = true;
-    $("publishToGitHubBtn").textContent = "Đang tải lên...";
-
-    try {
-      snapshot();
-      const contentStr = JSON.stringify(state, null, 2);
-      const contentB64 = btoa(unescape(encodeURIComponent(contentStr)));
-
-      const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE_PATH}`;
-      const getRes = await fetch(getUrl, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Accept": "application/vnd.github.v3+json"
-        }
-      });
-
-      let sha = null;
-      if (getRes.ok) {
-        const fileInfo = await getRes.json();
-        sha = fileInfo.sha;
-      }
-
-      const putRes = await fetch(getUrl, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "Accept": "application/vnd.github.v3+json"
-        },
-        body: JSON.stringify({
-          message: `Update schedule: ${state.date} (${state.tasks.length} tasks)`,
-          content: contentB64,
-          sha: sha || undefined
-        })
-      });
-
-      if (!putRes.ok) {
-        const err = await putRes.json();
-        throw new Error(err.message || "Lỗi cập nhật GitHub");
-      }
-
-      showToast("Đã đồng bộ lịch trình lên Web thành công! 🎉🌸");
-      $("tokenStatusNote").textContent = "✓ Đồng bộ thành công lúc " + new Date().toLocaleTimeString();
-    } catch (err) {
-      alert("Không thể cập nhật GitHub: " + err.message);
-    } finally {
-      $("publishToGitHubBtn").disabled = false;
-      $("publishToGitHubBtn").textContent = "Lưu & Xuất bản";
-    }
-  }
-
-  // ==========================================================
   // DIALOGS & EVENT LISTENERS
   // ==========================================================
   function openTaskDialog(task = null) {
@@ -1378,24 +832,13 @@
     $("taskDialog").close();
   }
 
-  function openSoundStudio(tab = "music") {
-    const dialog = $("soundStudioDialog");
-    dialog.showModal();
+  function openPlaylistModal() {
     renderPlaylist();
-    switchStudioTab(tab);
+    $("playlistDialog").showModal();
   }
 
-  function closeSoundStudio() {
-    $("soundStudioDialog").close();
-  }
-
-  function switchStudioTab(tabName) {
-    document.querySelectorAll(".studio-tab-btn").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.tab === tabName);
-    });
-    $("paneMusic").classList.toggle("active", tabName === "music");
-    $("paneAmbient").classList.toggle("active", tabName === "ambient");
-    $("paneChimes").classList.toggle("active", tabName === "chimes");
+  function closePlaylistModal() {
+    $("playlistDialog").close();
   }
 
   // Task Form Submit
@@ -1521,108 +964,38 @@
   $("startPauseBtn").addEventListener("click", startPauseTimer);
   $("resetTimerBtn").addEventListener("click", resetTimer);
 
-  // Sound Buttons & Studio Modal Triggers
-  $("topbarSoundBtn").addEventListener("click", () => openSoundStudio("music"));
-  $("openSoundModalBtn").addEventListener("click", () => openSoundStudio("music"));
-  $("openFullStudioBtn").addEventListener("click", () => openSoundStudio("music"));
-  $("closeStudioBtn").addEventListener("click", closeSoundStudio);
-
-  // Studio Tabs
-  document.querySelectorAll(".studio-tab-btn").forEach(btn => {
-    btn.addEventListener("click", () => switchStudioTab(btn.dataset.tab));
-  });
+  // Music Buttons & Playlist Modal Triggers
+  $("topbarMusicBtn").addEventListener("click", openPlaylistModal);
+  $("openPlaylistBtn").addEventListener("click", openPlaylistModal);
+  $("openPlaylistDockBtn").addEventListener("click", openPlaylistModal);
+  $("closePlaylistBtn").addEventListener("click", closePlaylistModal);
 
   // Quick Music Controls (Column 2)
-  $("quickPlayBtn").addEventListener("click", togglePlayMusic);
-  $("quickNextBtn").addEventListener("click", nextTrack);
+  $("tmbPlayBtn").addEventListener("click", togglePlayMusic);
+  $("tmbNextBtn").addEventListener("click", nextTrack);
+  $("tmbPrevBtn").addEventListener("click", prevTrack);
 
   // Bottom Dock Controls
   $("dockPlayBtn").addEventListener("click", togglePlayMusic);
   $("dockNextBtn").addEventListener("click", nextTrack);
   $("dockPrevBtn").addEventListener("click", prevTrack);
 
-  // Studio Music Player Controls
-  $("snpPlayBtn").addEventListener("click", togglePlayMusic);
-  $("snpNextBtn").addEventListener("click", nextTrack);
-  $("snpPrevBtn").addEventListener("click", prevTrack);
+  // Modal Music Controls
+  $("mpbPlayBtn").addEventListener("click", togglePlayMusic);
+  $("mpbNextBtn").addEventListener("click", nextTrack);
+  $("mpbPrevBtn").addEventListener("click", prevTrack);
 
   // Music Volume Sliders
-  function handleMusicVolumeChange(val) {
-    const num = Math.max(0, Math.min(100, Number(val))) / 100;
-    soundSettings.musicVolume = num;
-    audioEl.volume = num;
-    const pct = Math.round(num * 100) + "%";
-    $("musicVolumeSlider").value = Math.round(num * 100);
-    $("musicVolVal").textContent = pct;
-    $("snpVolSlider").value = Math.round(num * 100);
-    $("snpVolText").textContent = pct;
-  }
-
   $("musicVolumeSlider").addEventListener("input", e => handleMusicVolumeChange(e.target.value));
-  $("snpVolSlider").addEventListener("input", e => handleMusicVolumeChange(e.target.value));
+  $("modalVolSlider").addEventListener("input", e => handleMusicVolumeChange(e.target.value));
 
-  // Music Mute Icon Toggle
+  // Music Mute Toggle
   $("musicMuteBtn").addEventListener("click", () => {
     if (audioEl.volume > 0) {
       handleMusicVolumeChange(0);
     } else {
       handleMusicVolumeChange(65);
     }
-  });
-
-  // Toggle Bottom Dock collapse
-  $("toggleDockBtn").addEventListener("click", () => {
-    const dock = $("focusDock");
-    dock.classList.toggle("collapsed");
-    $("toggleDockBtn").textContent = dock.classList.contains("collapsed") ? "▴" : "▾";
-  });
-
-  // Quick Ambient Row in Timer Column
-  $("quickAmbientRow").addEventListener("click", e => {
-    const chip = e.target.closest(".ambient-chip");
-    if (!chip) return;
-    const name = chip.dataset.ambient;
-    if (name) toggleAmbientSound(name);
-  });
-
-  // Bottom Dock Ambient Buttons
-  document.querySelectorAll(".dock-ambient-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const name = btn.dataset.ambient;
-      if (name) toggleAmbientSound(name);
-    });
-  });
-
-  // Studio Ambient Toggle Checkboxes
-  document.querySelectorAll("input[id^='ambientToggle-']").forEach(chk => {
-    chk.addEventListener("change", e => {
-      const name = e.target.dataset.sound;
-      if (name) toggleAmbientSound(name);
-    });
-  });
-
-  // Individual Ambient Volume Sliders
-  document.querySelectorAll(".ambient-slider").forEach(slider => {
-    slider.addEventListener("input", e => {
-      const name = e.target.dataset.sound;
-      const val = Number(e.target.value);
-      soundSettings.ambientVolumes[name] = val / 100;
-      $(`ambVal-${name}`).textContent = `${val}%`;
-      updateAmbientVolumes();
-    });
-  });
-
-  // Ambient Master Volume Slider
-  $("ambientMasterSlider").addEventListener("input", e => {
-    const val = Number(e.target.value);
-    soundSettings.ambientMasterVolume = val / 100;
-    $("ambientMasterVolText").textContent = `${val}%`;
-    updateAmbientVolumes();
-  });
-
-  // Ambient Preset Buttons
-  document.querySelectorAll(".preset-btn").forEach(btn => {
-    btn.addEventListener("click", () => setAmbientPreset(btn.dataset.preset));
   });
 
   // Playlist Region Filters
@@ -1648,60 +1021,6 @@
     if (!isNaN(idx)) playTrack(idx);
   });
 
-  // Test Chimes
-  $("testStartChimeBtn").addEventListener("click", playGentleStartChime);
-  $("testFinishChimeBtn").addEventListener("click", playGentleFinishChime);
-
-  $("chimeVolSlider").addEventListener("input", e => {
-    const val = Number(e.target.value);
-    soundSettings.chimeVolume = val / 100;
-    $("chimeVolVal").textContent = `${val}%`;
-  });
-
-  // Browser Notification Request
-  $("requestNotifyBtn").addEventListener("click", async () => {
-    if (!("Notification" in window)) {
-      alert("Trình duyệt này không hỗ trợ thông báo đẩy.");
-      return;
-    }
-    const res = await Notification.requestPermission();
-    if (res === "granted") {
-      $("notifyPermissionStatus").textContent = "Trạng thái: ✓ Đã bật";
-      showToast("Đã cấp quyền thông báo đẩy thành công!");
-      sendBrowserNotification("Mint Day · Kim Oanh 🌿", "Thông báo đã sẵn sàng cho bạn!");
-    } else {
-      $("notifyPermissionStatus").textContent = "Trạng thái: Bị từ chối";
-    }
-  });
-
-  // GitHub Sync Modal
-  $("openSyncModalBtn").addEventListener("click", () => {
-    const token = localStorage.getItem(GITHUB_TOKEN_KEY) || "";
-    $("githubTokenInput").value = token;
-    $("tokenStatusNote").textContent = token ? "✓ Đã lưu token trên máy này." : "";
-    $("syncDialog").showModal();
-  });
-
-  $("closeSyncBtn").addEventListener("click", () => $("syncDialog").close());
-  $("publishToGitHubBtn").addEventListener("click", publishDataToGitHub);
-
-  $("downloadDataJsonBtn").addEventListener("click", () => {
-    snapshot();
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "data.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast("Đã tải file data.json.");
-  });
-
-  $("reloadFromCloudBtn").addEventListener("click", async () => {
-    await syncWithCloudData();
-    $("syncDialog").close();
-  });
-
   // Export / Import
   $("exportBtn").addEventListener("click", () => {
     snapshot();
@@ -1712,7 +1031,7 @@
     a.download = `mint-day-kimoanh-backup-${todayKey()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast("Đã xuất bản sao lưu đầy đủ lịch sử!");
+    showToast("Đã xuất file sao lưu dữ liệu!");
   });
 
   $("importBtn").addEventListener("click", () => $("importFile").click());
@@ -1764,22 +1083,15 @@
     saveLocal();
   });
 
-  // Auto snapshot every 20s
+  // Auto snapshot every 30s
   setInterval(() => {
     rolloverIfNeeded();
     saveLocal();
     if (viewedDate === todayKey()) renderCalendarColumn();
-  }, 20000);
-
-  // Initialize Notification Permission Status
-  if ("Notification" in window && Notification.permission === "granted") {
-    const statusEl = $("notifyPermissionStatus");
-    if (statusEl) statusEl.textContent = "Trạng thái: ✓ Đã bật";
-  }
+  }, 30000);
 
   // Startup initialization
   rolloverIfNeeded();
   render();
   renderPlaylist();
-  syncWithCloudData();
 })();

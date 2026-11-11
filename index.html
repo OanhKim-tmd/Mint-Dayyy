@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#1e7a4b">
+  <meta name="theme-color" content="#1f7d4e">
   <title>Mint Day · Kim Oanh — Kế hoạch & Không gian Tập trung</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,24 +33,14 @@
         <span id="headerSummary">0/0 việc · 0m tập trung</span>
       </div>
 
-      <!-- Quick Sound Hub Button -->
-      <button class="pill-badge sound-hub-pill" id="topbarSoundBtn" title="Mở Không gian Âm nhạc & Âm thanh">
-        <span class="sound-wave-bars" id="soundWaveBars">
-          <span></span><span></span><span></span><span></span>
-        </span>
-        <span id="topbarSoundText">Âm nhạc & Âm thanh</span>
+      <!-- Quick Music Button in Topbar -->
+      <button class="pill-badge music-topbar-pill" id="topbarMusicBtn" title="Mở danh sách 25 bài nhạc động lực">
+        <span class="music-note-icon">🎵</span>
+        <span id="topbarMusicText">Nhạc động lực (25 bài)</span>
       </button>
-
-      <div class="pill-badge sync-pill" id="syncStatusPill" title="Trạng thái dữ liệu">
-        <span class="sync-dot"></span>
-        <span id="syncStatusText">Lịch trình Kim Oanh</span>
-      </div>
     </div>
 
     <div class="topbar-right">
-      <button class="btn btn-outline" id="openSyncModalBtn" title="Đồng bộ lịch trình lên Web">
-        <span>☁️</span> <span>Đồng bộ Web</span>
-      </button>
       <div class="btn-group">
         <button class="btn btn-icon" id="exportBtn" title="Tải file sao lưu (JSON)" aria-label="Tải sao lưu">↥</button>
         <button class="btn btn-icon" id="importBtn" title="Nhập bản sao lưu (JSON)" aria-label="Nhập sao lưu">↧</button>
@@ -134,8 +124,8 @@
           <svg viewBox="0 0 220 220" aria-hidden="true">
             <defs>
               <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#1e7a4b" />
-                <stop offset="60%" stop-color="#2e9b62" />
+                <stop offset="0%" stop-color="#1f7d4e" />
+                <stop offset="55%" stop-color="#2e9b62" />
                 <stop offset="100%" stop-color="#e6738f" />
               </linearGradient>
             </defs>
@@ -158,24 +148,17 @@
         <button class="btn btn-timer-sub" id="resetTimerBtn" disabled title="Đặt lại đồng hồ việc này về ban đầu">↺</button>
       </div>
 
-      <!-- Compact Audio Quick Bar (Inside Timer Column) -->
-      <div class="timer-audio-bar">
-        <div class="tab-audio-header">
-          <div class="tab-audio-title">
-            <span class="audio-dot" id="musicStatusDot"></span>
-            <span class="audio-track-label" id="quickTrackLabel">River Flows in You · Yiruma</span>
-          </div>
-          <button class="btn-audio-mini" id="quickPlayBtn" title="Phát / Dừng nhạc">▶</button>
-          <button class="btn-audio-mini" id="quickNextBtn" title="Bài tiếp theo">⏭</button>
-          <button class="btn-audio-open" id="openSoundModalBtn" title="Mở Studio Âm thanh đầy đủ">🎛️ Studio</button>
+      <!-- Compact Music Bar in Column 2 -->
+      <div class="timer-music-bar">
+        <div class="tmb-info">
+          <span class="tmb-dot" id="tmbDot"></span>
+          <span class="tmb-title" id="tmbTitle">River Flows in You · Yiruma</span>
         </div>
-        <div class="quick-ambient-row" id="quickAmbientRow">
-          <button class="ambient-chip" data-ambient="ocean" title="Tiếng sóng biển">🌊 Sóng</button>
-          <button class="ambient-chip" data-ambient="library" title="Tiếng thư viện">📚 Thư viện</button>
-          <button class="ambient-chip" data-ambient="cafe" title="Tiếng cà phê">☕ Cà phê</button>
-          <button class="ambient-chip" data-ambient="noise" title="Tiếng ồn trắng">📻 Noise</button>
-          <button class="ambient-chip" data-ambient="pencil" title="Tiếng bút viết">✏️ Bút viết</button>
-          <button class="ambient-chip" data-ambient="wind" title="Tiếng gió thổi">🍃 Gió</button>
+        <div class="tmb-actions">
+          <button class="btn-tmb-ctrl" id="tmbPrevBtn" title="Bài trước">⏮</button>
+          <button class="btn-tmb-ctrl btn-tmb-play" id="tmbPlayBtn" title="Phát / Tạm dừng">▶</button>
+          <button class="btn-tmb-ctrl" id="tmbNextBtn" title="Bài tiếp theo">⏭</button>
+          <button class="btn-tmb-playlist" id="openPlaylistBtn" title="Danh sách 25 bài">📋 List</button>
         </div>
       </div>
 
@@ -259,8 +242,8 @@
     </section>
   </main>
 
-  <!-- Persistent Focus Sound Bottom Dock (Floating / Docked) -->
-  <aside class="focus-dock" id="focusDock" aria-label="Thanh điều khiển âm thanh tập trung">
+  <!-- Clean Floating Music Player Dock (Bottom) -->
+  <aside class="music-dock" id="musicDock" aria-label="Thanh điều khiển nhạc">
     <div class="dock-left">
       <button class="dock-disc-btn" id="dockPlayBtn" title="Phát / Tạm dừng">
         <span class="dock-disc-icon" id="dockPlayIcon">▶</span>
@@ -276,32 +259,18 @@
     </div>
 
     <div class="dock-center">
-      <!-- Volume Slider for Music -->
+      <!-- Music Volume Slider -->
       <div class="dock-vol-group">
         <span class="vol-icon" id="musicMuteBtn" title="Bật/Tắt âm">🎵</span>
         <input type="range" class="vol-slider" id="musicVolumeSlider" min="0" max="100" value="65" title="Âm lượng nhạc">
         <span class="vol-val" id="musicVolVal">65%</span>
       </div>
-
-      <div class="dock-divider"></div>
-
-      <!-- Quick Ambient Toggles -->
-      <div class="dock-ambient-toggles">
-        <span class="dock-ambient-label">Âm thanh:</span>
-        <button class="dock-ambient-btn" data-ambient="ocean" title="Tiếng sóng biển">🌊</button>
-        <button class="dock-ambient-btn" data-ambient="library" title="Tiếng thư viện">📚</button>
-        <button class="dock-ambient-btn" data-ambient="cafe" title="Tiếng cà phê">☕</button>
-        <button class="dock-ambient-btn" data-ambient="noise" title="Tiếng ồn trắng">📻</button>
-        <button class="dock-ambient-btn" data-ambient="pencil" title="Tiếng bút viết">✏️</button>
-        <button class="dock-ambient-btn" data-ambient="wind" title="Tiếng gió">🍃</button>
-      </div>
     </div>
 
     <div class="dock-right">
-      <button class="btn btn-dock-action" id="openFullStudioBtn">
-        <span>🎛️</span> <span>Studio Âm Thanh</span>
+      <button class="btn btn-dock-action" id="openPlaylistDockBtn">
+        <span>📋</span> <span>Playlist 25 Bài</span>
       </button>
-      <button class="dock-toggle-btn" id="toggleDockBtn" title="Thu gọn / Mở rộng thanh nhạc">▾</button>
     </div>
   </aside>
 
@@ -356,319 +325,55 @@
     </form>
   </dialog>
 
-  <!-- Dialog: STUDIO ÂM NHẠC & ÂM THANH MÔI TRƯỜNG -->
-  <dialog id="soundStudioDialog" class="studio-modal">
-    <div class="studio-wrap">
-      <div class="dialog-header studio-header">
-        <div class="studio-header-title">
-          <span class="studio-badge">🎧🌸</span>
+  <!-- Dialog: 25 BÀI NHẠC ĐỘNG LỰC Á - ÂU - MỸ -->
+  <dialog id="playlistDialog" class="playlist-modal">
+    <div class="playlist-modal-wrap">
+      <div class="dialog-header playlist-modal-header">
+        <div class="pmh-title">
+          <span class="pmh-badge">🎧🌸</span>
           <div>
-            <h2>Không gian Âm nhạc & Tập trung</h2>
-            <p class="dialog-sub">25 bản nhạc động lực Á · Âu · Mỹ & 6 âm thanh thiên nhiên êm dịu</p>
+            <h2>25 Bản Nhạc Động Lực</h2>
+            <p class="dialog-sub">Tuyển tập nhạc truyền cảm hứng & tập trung Á · Âu · Mỹ</p>
           </div>
         </div>
-        <button type="button" class="btn-close" id="closeStudioBtn" aria-label="Đóng">✕</button>
+        <button type="button" class="btn-close" id="closePlaylistBtn" aria-label="Đóng">✕</button>
       </div>
 
-      <!-- Studio Tabs Navigation -->
-      <div class="studio-tabs">
-        <button class="studio-tab-btn active" data-tab="music">🎵 Nhạc Động Lực (25 Bài)</button>
-        <button class="studio-tab-btn" data-tab="ambient">🍃 6 Âm Thanh Môi Trường</button>
-        <button class="studio-tab-btn" data-tab="chimes">🔔 Chuông & Thông Báo</button>
-      </div>
-
-      <!-- TAB 1: 25 BÀI NHẠC ĐỘNG LỰC Á - ÂU - MỸ -->
-      <div class="studio-tab-pane active" id="paneMusic">
-        <!-- Player Banner -->
-        <div class="studio-now-playing-card">
-          <div class="snp-meta">
-            <span class="snp-region-tag" id="snpRegionTag">Á ĐÔNG</span>
-            <h3 id="snpTitle">River Flows in You</h3>
-            <p id="snpArtist">Yiruma · Hàn Quốc · Piano Focus</p>
-          </div>
-          <div class="snp-controls">
-            <button class="btn-snp-circle" id="snpPrevBtn" title="Bài trước">⏮</button>
-            <button class="btn-snp-circle btn-snp-play" id="snpPlayBtn" title="Phát / Dừng">▶</button>
-            <button class="btn-snp-circle" id="snpNextBtn" title="Bài tiếp">⏭</button>
-          </div>
-          <div class="snp-volume-wrap">
-            <span class="snp-vol-label">Âm lượng nhạc:</span>
-            <input type="range" class="vol-slider" id="snpVolSlider" min="0" max="100" value="65">
-            <strong id="snpVolText">65%</strong>
-          </div>
+      <!-- Player Banner inside Modal -->
+      <div class="modal-player-bar">
+        <div class="mpb-meta">
+          <span class="mpb-tag" id="mpbTag">🌸 CHÂU Á</span>
+          <h3 id="mpbTitle">River Flows in You</h3>
+          <p id="mpbArtist">Yiruma · Piano Focus</p>
         </div>
-
-        <!-- Filter & Search Row -->
-        <div class="playlist-filter-bar">
-          <div class="playlist-region-filters" id="playlistRegionFilters">
-            <button class="region-chip active" data-region="all">Tất cả (25)</button>
-            <button class="region-chip" data-region="Á">🌸 Châu Á (10)</button>
-            <button class="region-chip" data-region="Âu">🍃 Châu Âu (8)</button>
-            <button class="region-chip" data-region="Mỹ">✨ Bắc Mỹ (7)</button>
-          </div>
-          <div class="playlist-search-wrap">
-            <input type="text" id="playlistSearchInput" placeholder="Tìm tên bài, nghệ sĩ..." autocomplete="off">
-          </div>
+        <div class="mpb-ctrls">
+          <button class="btn-mpb-circle" id="mpbPrevBtn" title="Bài trước">⏮</button>
+          <button class="btn-mpb-circle btn-mpb-play" id="mpbPlayBtn" title="Phát / Tạm dừng">▶</button>
+          <button class="btn-mpb-circle" id="mpbNextBtn" title="Bài tiếp theo">⏭</button>
         </div>
-
-        <!-- Playlist Items Scroll -->
-        <div class="playlist-scroll" id="playlistScroll">
-          <!-- Dynamically populated 25 songs -->
+        <div class="mpb-vol">
+          <span class="mpb-vol-label">Âm lượng:</span>
+          <input type="range" class="vol-slider" id="modalVolSlider" min="0" max="100" value="65">
+          <strong id="modalVolText">65%</strong>
         </div>
       </div>
 
-      <!-- TAB 2: 6 ÂM THANH MÔI TRƯỜNG & MIXER -->
-      <div class="studio-tab-pane" id="paneAmbient">
-        <!-- Master Ambient Volume & Presets -->
-        <div class="ambient-master-card">
-          <div class="ambient-master-left">
-            <span class="ambient-master-title">Âm lượng Tổng Âm thanh nền:</span>
-            <div class="vol-row">
-              <input type="range" class="vol-slider" id="ambientMasterSlider" min="0" max="100" value="70">
-              <strong id="ambientMasterVolText">70%</strong>
-            </div>
-          </div>
-          <div class="ambient-presets-wrap">
-            <span class="presets-label">Gợi ý phối âm:</span>
-            <div class="presets-buttons">
-              <button class="preset-btn" data-preset="study">📚 Thư viện thi cử</button>
-              <button class="preset-btn" data-preset="beach">🌊 Chiều hoàng hôn</button>
-              <button class="preset-btn" data-preset="cafe">☕ Quán cafe mưa</button>
-              <button class="preset-btn" data-preset="focus">📻 Tập trung sâu</button>
-              <button class="preset-btn" data-preset="reset">✕ Tắt hết</button>
-            </div>
-          </div>
+      <!-- Filter & Search Bar -->
+      <div class="playlist-filter-bar">
+        <div class="playlist-region-filters" id="playlistRegionFilters">
+          <button class="region-chip active" data-region="all">Tất cả (25)</button>
+          <button class="region-chip" data-region="Á">🌸 Châu Á (10)</button>
+          <button class="region-chip" data-region="Âu">🍃 Châu Âu (8)</button>
+          <button class="region-chip" data-region="Mỹ">✨ Bắc Mỹ (7)</button>
         </div>
-
-        <!-- 6 Ambient Cards Grid -->
-        <div class="ambient-grid">
-          <!-- 1. Sóng biển -->
-          <div class="ambient-card" id="ambientCard-ocean">
-            <div class="ambient-card-top">
-              <div class="ambient-info">
-                <span class="ambient-icon">🌊</span>
-                <div>
-                  <strong>Tiếng Sóng Biển</strong>
-                  <span class="ambient-desc">Dịu êm từng nhịp vỗ bờ</span>
-                </div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="ambientToggle-ocean" data-sound="ocean">
-                <span class="slider round"></span>
-              </label>
-            </div>
-            <div class="ambient-card-bot">
-              <span>Âm lượng</span>
-              <input type="range" class="vol-slider ambient-slider" id="ambientVol-ocean" data-sound="ocean" min="0" max="100" value="50">
-              <span class="amb-val" id="ambVal-ocean">50%</span>
-            </div>
-          </div>
-
-          <!-- 2. Thư viện -->
-          <div class="ambient-card" id="ambientCard-library">
-            <div class="ambient-card-top">
-              <div class="ambient-info">
-                <span class="ambient-icon">📚</span>
-                <div>
-                  <strong>Tiếng Thư Viện</strong>
-                  <span class="ambient-desc">Yên tĩnh, lật trang sách</span>
-                </div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="ambientToggle-library" data-sound="library">
-                <span class="slider round"></span>
-              </label>
-            </div>
-            <div class="ambient-card-bot">
-              <span>Âm lượng</span>
-              <input type="range" class="vol-slider ambient-slider" id="ambientVol-library" data-sound="library" min="0" max="100" value="50">
-              <span class="amb-val" id="ambVal-library">50%</span>
-            </div>
-          </div>
-
-          <!-- 3. Cà phê -->
-          <div class="ambient-card" id="ambientCard-cafe">
-            <div class="ambient-card-top">
-              <div class="ambient-info">
-                <span class="ambient-icon">☕</span>
-                <div>
-                  <strong>Quán Cà Phê</strong>
-                  <span class="ambient-desc">Ấm cúng, tiếng thìa tách</span>
-                </div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="ambientToggle-cafe" data-sound="cafe">
-                <span class="slider round"></span>
-              </label>
-            </div>
-            <div class="ambient-card-bot">
-              <span>Âm lượng</span>
-              <input type="range" class="vol-slider ambient-slider" id="ambientVol-cafe" data-sound="cafe" min="0" max="100" value="50">
-              <span class="amb-val" id="ambVal-cafe">50%</span>
-            </div>
-          </div>
-
-          <!-- 4. Tiếng ồn trắng -->
-          <div class="ambient-card" id="ambientCard-noise">
-            <div class="ambient-card-top">
-              <div class="ambient-info">
-                <span class="ambient-icon">📻</span>
-                <div>
-                  <strong>Tiếng Ồn Trắng</strong>
-                  <span class="ambient-desc">Chặn tạp âm, focus sâu</span>
-                </div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="ambientToggle-noise" data-sound="noise">
-                <span class="slider round"></span>
-              </label>
-            </div>
-            <div class="ambient-card-bot">
-              <span>Âm lượng</span>
-              <input type="range" class="vol-slider ambient-slider" id="ambientVol-noise" data-sound="noise" min="0" max="100" value="45">
-              <span class="amb-val" id="ambVal-noise">45%</span>
-            </div>
-          </div>
-
-          <!-- 5. Tiếng bút viết -->
-          <div class="ambient-card" id="ambientCard-pencil">
-            <div class="ambient-card-top">
-              <div class="ambient-info">
-                <span class="ambient-icon">✏️</span>
-                <div>
-                  <strong>Tiếng Bút Viết</strong>
-                  <span class="ambient-desc">Sột soạt từng dòng chữ</span>
-                </div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="ambientToggle-pencil" data-sound="pencil">
-                <span class="slider round"></span>
-              </label>
-            </div>
-            <div class="ambient-card-bot">
-              <span>Âm lượng</span>
-              <input type="range" class="vol-slider ambient-slider" id="ambientVol-pencil" data-sound="pencil" min="0" max="100" value="55">
-              <span class="amb-val" id="ambVal-pencil">55%</span>
-            </div>
-          </div>
-
-          <!-- 6. Tiếng gió -->
-          <div class="ambient-card" id="ambientCard-wind">
-            <div class="ambient-card-top">
-              <div class="ambient-info">
-                <span class="ambient-icon">🍃</span>
-                <div>
-                  <strong>Tiếng Gió Thoảng</strong>
-                  <span class="ambient-desc">Gió thu rì rào qua tán lá</span>
-                </div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="ambientToggle-wind" data-sound="wind">
-                <span class="slider round"></span>
-              </label>
-            </div>
-            <div class="ambient-card-bot">
-              <span>Âm lượng</span>
-              <input type="range" class="vol-slider ambient-slider" id="ambientVol-wind" data-sound="wind" min="0" max="100" value="50">
-              <span class="amb-val" id="ambVal-wind">50%</span>
-            </div>
-          </div>
+        <div class="playlist-search-wrap">
+          <input type="text" id="playlistSearchInput" placeholder="Tìm tên bài, nghệ sĩ..." autocomplete="off">
         </div>
       </div>
 
-      <!-- TAB 3: CHUÔNG THÔNG BÁO & THIẾT LẬP -->
-      <div class="studio-tab-pane" id="paneChimes">
-        <div class="chime-settings-card">
-          <h3>🔔 Âm Thanh Thông Báo Khi Đếm Ngược</h3>
-          <p class="section-desc">Chuông thông báo tổng hợp bằng Web Audio dịu êm, thanh thoát, không giật mình.</p>
-
-          <!-- Chuông bắt đầu -->
-          <div class="chime-row">
-            <div class="chime-info">
-              <strong>1. Chuông Bắt Đầu Chạy</strong>
-              <span>Hợp âm thiền Zen D5/A5 nhẹ nhàng thông báo bước vào phiên học</span>
-            </div>
-            <button class="btn btn-outline btn-test-chime" id="testStartChimeBtn">
-              <span>▷ Nghe thử</span>
-            </button>
-          </div>
-
-          <!-- Chuông kết thúc -->
-          <div class="chime-row">
-            <div class="chime-info">
-              <strong>2. Chuông Hoàn Thành Phiên Học</strong>
-              <span>Giai điệu pha lê trong trẻo 5 nốt ngân vang chúc mừng hoàn thành</span>
-            </div>
-            <button class="btn btn-outline btn-test-chime" id="testFinishChimeBtn">
-              <span>▷ Nghe thử</span>
-            </button>
-          </div>
-
-          <div class="chime-row">
-            <div class="chime-info">
-              <strong>3. Âm Lượng Chuông Thông Báo</strong>
-              <span>Tùy chỉnh độ lớn chuông để phù hợp tai nghe</span>
-            </div>
-            <div class="vol-row">
-              <input type="range" class="vol-slider" id="chimeVolSlider" min="0" max="100" value="70">
-              <strong id="chimeVolVal">70%</strong>
-            </div>
-          </div>
-        </div>
-
-        <div class="chime-settings-card">
-          <h3>💻 Thông Báo Trên Màn Hình & Trình Duyệt</h3>
-          <p class="section-desc">Hiển thị thông báo khi đồng hồ hoàn thành ngay cả khi bạn đang mở tab khác hoặc xem tài liệu:</p>
-          <div class="browser-notify-row">
-            <div class="chime-info">
-              <strong id="notifyPermissionStatus">Trạng thái: Chưa bật</strong>
-              <span>Nhận thông báo hoàn thành bài học khi chuyển tab</span>
-            </div>
-            <button class="btn btn-primary" id="requestNotifyBtn">Bật Thông Báo</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </dialog>
-
-  <!-- Dialog: Đồng Bộ Web & GitHub -->
-  <dialog id="syncDialog">
-    <div class="sync-dialog-wrap">
-      <div class="dialog-header">
-        <div>
-          <h2>Đồng bộ Lịch trình Web</h2>
-          <p class="dialog-sub">Chia sẻ & cập nhật lịch trình của Kim Oanh</p>
-        </div>
-        <button type="button" class="btn-close" id="closeSyncBtn" aria-label="Đóng">✕</button>
-      </div>
-
-      <div class="sync-info-box">
-        <div class="sync-info-item">
-          <span class="info-label">Link Web công khai:</span>
-          <a class="info-link" id="publicWebLink" href="https://oanhkim-tmd.github.io/mint-day-kimoanh/" target="_blank" rel="noopener">
-            https://oanhkim-tmd.github.io/mint-day-kimoanh/
-          </a>
-        </div>
-        <p class="info-note">Bất kỳ ai mở link này trên điện thoại hay máy tính đều xem được lịch trình và lịch sử của bạn!</p>
-      </div>
-
-      <div class="sync-section">
-        <h3>🚀 Cập nhật lên Web (Dành riêng cho Kim Oanh)</h3>
-        <p class="section-desc">Nhập GitHub Token (chỉ lưu trong máy bạn) để tự động cập nhật lên web chỉ với 1 click:</p>
-        <div class="token-input-row">
-          <input type="password" id="githubTokenInput" placeholder="ghp_xxxx (GitHub Personal Access Token)" autocomplete="off">
-          <button class="btn btn-primary" id="publishToGitHubBtn">Lưu & Xuất bản</button>
-        </div>
-        <span class="token-status-note" id="tokenStatusNote"></span>
-      </div>
-
-      <div class="sync-section">
-        <h3>📥 Tải file dữ liệu</h3>
-        <p class="section-desc">Hoặc tải file <code>data.json</code> về máy để lưu trữ hoặc commit bằng git:</p>
-        <div class="sync-actions-row">
-          <button class="btn btn-outline" id="downloadDataJsonBtn">Tải file data.json</button>
-          <button class="btn btn-soft" id="reloadFromCloudBtn">Tải lại từ Web</button>
-        </div>
+      <!-- Scrollable Track List -->
+      <div class="playlist-scroll" id="playlistScroll">
+        <!-- 25 bài nhạc render động bằng JavaScript -->
       </div>
     </div>
   </dialog>
@@ -676,7 +381,7 @@
   <!-- Notification Toast -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <!-- Audio element for Music -->
+  <!-- HTML5 Audio Element for Music -->
   <audio id="musicAudio" preload="none"></audio>
 
   <script src="app.js"></script>
